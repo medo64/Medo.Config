@@ -72,11 +72,13 @@ public static class Config {
             string systemConfigPath;
             string userConfigPath;
             string stateConfigPath;
+            string recentPath;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 systemConfigPath = "";
                 userConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".conf");
                 stateConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".state");
+                recentPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".recent");
             } else {
                 var homeFallback = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 var home = Environment.GetEnvironmentVariable("HOME") ?? homeFallback;
@@ -85,9 +87,10 @@ public static class Config {
                 systemConfigPath = Path.Combine("/etc", applicationName, applicationName + ".conf");
                 userConfigPath = Path.Combine(configHome, applicationName, applicationName + ".conf");
                 stateConfigPath = Path.Combine(stateHome, applicationName, applicationName + ".state");
+                recentPath = Path.Combine(stateHome, applicationName, applicationName + ".recent");
             }
 
-            Initialize(userConfigPath, systemConfigPath, stateConfigPath);
+            Initialize(userConfigPath, systemConfigPath, stateConfigPath, recentPath);
         }
     }
 
@@ -99,15 +102,18 @@ public static class Config {
     /// <param name="systemConfigPath">Full path to the system configuration file or null if system configuration file is not to be used.</param>
     /// <param name="userConfigPath">Full path to the user configuration file.</param>
     /// <param name="stateConfigPath">Full path to the state configuration file.</param>
-    public static void Initialize(string? userConfigPath, string? systemConfigPath, string? stateConfigPath) {
+    /// <param name="recentPath">Full path to the recent file list.</param>
+    public static void Initialize(string? userConfigPath, string? systemConfigPath, string? stateConfigPath, string? recentPath) {
         lock (SyncRoot) {
             var userConfigFile = !string.IsNullOrEmpty(userConfigPath) ? new FileInfo(userConfigPath) : null;
             var systemConfigFile = !string.IsNullOrEmpty(systemConfigPath) ? new FileInfo(systemConfigPath) : null;
             var stateConfigFile = !string.IsNullOrEmpty(stateConfigPath) ? new FileInfo(stateConfigPath) : null;
+            var recentFile = !string.IsNullOrEmpty(recentPath) ? new FileInfo(recentPath) : null;
 
             _system = (systemConfigFile != null) ? new ConfigFileSource(systemConfigFile.FullName) : new ConfigDummySource();
             _user = (userConfigFile != null) ? new ConfigFileSource(userConfigFile.FullName) : new ConfigDummySource();
             _state = (stateConfigFile != null) ? new ConfigFileSource(stateConfigFile.FullName) : new ConfigDummySource();
+            _recent = (recentFile != null) ? new RecentFileSource(recentFile.FullName) : new RecentDummySource();
 
             WasInitialized = true;
         }
@@ -152,6 +158,19 @@ public static class Config {
             lock (SyncRoot) {
                 if (!WasInitialized) { Initialize(); }
                 return _state!;
+            }
+        }
+    }
+
+    private static RecentSource? _recent;
+    /// <summary>
+    /// Gets the recent file list.
+    /// </summary>
+    public static RecentSource Recent {
+        get {
+            lock (SyncRoot) {
+                if (!WasInitialized) { Initialize(); }
+                return _recent!;
             }
         }
     }

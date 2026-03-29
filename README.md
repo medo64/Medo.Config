@@ -10,9 +10,10 @@ and Linux.
 ## Features
 
 - User configuration with system configuration file as a fallback
-- Separate state file
-- Thread-safe access
 - Preserves comments and general formatting when possible
+- Thread-safe access
+- Separate state file
+- Separate recent files handling
 
 
 ## Installation
@@ -34,6 +35,7 @@ Config.Write("LastRun", DateTime.UtcNow);
 ~~~
 
 See `examples/ConfigExample` for a minimal usage sample.
+See `examples/RecentExample` for a recent file handling example.
 
 
 ## Default File Locations
@@ -46,6 +48,7 @@ On Windows:
 - System: not used
 - User: `%APPDATA%\[ApplicationName]\[ApplicationName].conf`
 - State: `%APPDATA%\[ApplicationName]\[ApplicationName].state`
+- Recent: `%APPDATA%\[ApplicationName]\[ApplicationName].recent`
 
 On Linux/macOS and other non-Windows platforms:
 
@@ -54,11 +57,15 @@ On Linux/macOS and other non-Windows platforms:
 	(or `~/.config/[applicationname]/[applicationname].conf`)
 - State: `$XDG_STATE_HOME/[applicationname]/[applicationname].state`
 	(or `~/.local/state/[applicationname]/[applicationname].state`)
+- Recent: `$XDG_STATE_HOME/[applicationname]/[applicationname].recent`
+	(or `~/.local/state/[applicationname]/[applicationname].recent`)
 
 Note: non-Windows defaults normalize app name to lowercase.
 
 
 ## File Format
+
+### Configuration and State
 
 Configuration files use a properties-style text format:
 
@@ -75,6 +82,16 @@ Path: /opt/b
 - comments beginning with `#` are supported
 
 
+### Recent
+
+Recent file storage uses one file name per line in UTF-8 (without BOM) file:
+
+~~~properties
+/file1.txt
+/file2.txt
+~~~
+
+
 ## Custom Initialization
 
 If needed, provide explicit paths:
@@ -85,7 +102,8 @@ using Medo;
 Config.Initialize(
 		userConfigPath: "/home/app/.config/myapp.conf",
 		systemConfigPath: "/etc/myapp.conf",
-		stateConfigPath: "/home/app/.local/state/myapp.state");
+		stateConfigPath: "/home/app/.local/state/myapp.state"),
+		recentPath: "/home/app/.local/state/myapp.recent");
 ~~~
 
 Pass `null` for any path that is not needed.
