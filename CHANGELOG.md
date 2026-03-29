@@ -9,4 +9,4 @@ Changelog at https://github.com/medo64/Medo.Config/blob/main/CHANGELOG.md
 
 
 [unreleased]: https://github.com/medo64/Medo.Config
-[1.0.0]: https://www.nuget.org/packages/Config/1.0.0
+[1.0.0]: https://www.nuget.org/packages/Medo.Config/1.0.0
