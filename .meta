@@ -1,0 +1,4 @@
+PROJECT_NAME:             Medo.Config
+PROJECT_ENTRYPOINT:       src/Medo.Config/Medo.Config.csproj
+PACKAGE_NUGET:            Medo.Config
+PACKAGE_NUGET_ENTRYPOINT: src/MultiFramework/Medo.Config.csproj
