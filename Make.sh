@@ -242,9 +242,10 @@ if [ "$PACKAGE_NUGET" != "" ]; then
 
     PACKAGE_NUGET_VERSION=`cat "$PACKAGE_NUGET_ENTRYPOINT" | grep "<Version>" | sed 's^</\?Version>^^g' | xargs`
     if [ "$PACKAGE_NUGET_VERSION" = "" ]; then
-        if [ "$PACKAGE_NUGET_VERSION" = "" ]; then
-            PACKAGE_NUGET_VERSION=0.0.0
-        fi
+        PACKAGE_NUGET_VERSION="$GIT_VERSION"
+    fi
+    if [ "$PACKAGE_NUGET_VERSION" = "" ]; then
+        PACKAGE_NUGET_VERSION=0.0.0
     fi
     echo "${ANSI_PURPLE}NuGET package version: ${ANSI_MAGENTA}$PACKAGE_NUGET_VERSION${ANSI_RESET}"
 
