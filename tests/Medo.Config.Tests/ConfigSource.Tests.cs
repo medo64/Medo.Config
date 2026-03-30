@@ -155,6 +155,18 @@ public class ConfigSource_Tests {
     }
 
     [TestMethod]
+    public void ConfigSource_SpacingPreserved() {
+        lock (SingleTestSync) {
+            using var loader = new ConfigLoader("SpacingPreserved.conf.raw", "SpacingPreserved.Good.conf.raw");
+            Config.Write("KeyOne", "Value 1a");
+            Config.Write("KeyTwo", "Value 2b");
+            Config.Write("KeyThree", "Value 3c");
+
+            Assert.AreEqual(loader.GoodText, File.ReadAllText(loader.FileName));
+        }
+    }
+
+    [TestMethod]
     public void ConfigSource_SpacingPreservedOnAdd() {
         lock (SingleTestSync) {
             using var loader = new ConfigLoader("SpacingPreservedOnAdd.conf.raw", "SpacingPreservedOnAdd.Good.conf.raw");

@@ -467,51 +467,78 @@ internal class PropertiesFile {
     public void WriteMany(string key, string[] values) {
         if (CachedEntries == null) { FillCache(); }
 
-        if (CachedEntries!.TryGetValue(key, out _)) {
-            var lastIndex = 0;
-            LineData? lastLine = null;
-            for (var i = Lines.Count - 1; i >= 0; i--) { //find insertion point
-                var line = Lines[i];
-                if (string.Equals(key, line.Key, KeyComparison)) {
-                    if (lastLine == null) {
-                        lastLine = line;
-                        lastIndex = i;
-                    } else {
-                        lastIndex--;
-                    }
-                    Lines.RemoveAt(i);
-                }
-            }
+        if (values.Length == 0) {
 
-            var hasLines = (Lines.Count > 0);
-            foreach (var value in values) {
-                Lines.Insert(lastIndex, new LineData(lastLine ?? (hasLines ? Lines[0] : null), key, value));
-                lastIndex++;
-            }
+            Delete(key);
 
-            FillCache();
-        } else {
-            var hasLines = (Lines.Count > 0);
-            if (!hasLines) {
-                foreach (var value in values) {
-                    CachedEntries[key] = Lines.Count;
-                    Lines.Add(new LineData(null, key, value));
-                }
-                Lines.Add(new LineData());
-            } else if (!Lines[^1].IsEmpty) {
-                foreach (var value in values) {
-                    CachedEntries[key] = Lines.Count;
-                    Lines.Add(new LineData(Lines[0], key, value));
-                }
+        } else if (values.Length == 1) {  // special handling to preserve line comments
+
+            if (CachedEntries!.TryGetValue(key, out var lineIndex)) {
+                var data = Lines[lineIndex];
+                data.Key = key;
+                data.Value = values[0];
             } else {
-                foreach (var value in values) {
-                    CachedEntries[key] = Lines.Count - 1;
-                    Lines.Insert(Lines.Count - 1, new LineData(Lines[0], key, value));
+                var hasLines = (Lines.Count > 0);
+                var newData = new LineData(hasLines ? Lines[0] : null, key, values[0]);
+                if (!hasLines) {
+                    CachedEntries.Add(key, Lines.Count);
+                    Lines.Add(newData);
+                    Lines.Add(new LineData());
+                } else if (!Lines[^1].IsEmpty) {
+                    CachedEntries.Add(key, Lines.Count);
+                    Lines.Add(newData);
+                } else {
+                    CachedEntries.Add(key, Lines.Count - 1);
+                    Lines.Insert(Lines.Count - 1, newData);
                 }
             }
+
+        } else {  // multiple values, not so gentle with inline comments
+
+            if (CachedEntries!.TryGetValue(key, out _)) {
+                var lastIndex = 0;
+                LineData? lastLine = null;
+                for (var i = Lines.Count - 1; i >= 0; i--) { //find insertion point
+                    var line = Lines[i];
+                    if (string.Equals(key, line.Key, KeyComparison)) {
+                        if (lastLine == null) {
+                            lastLine = line;
+                            lastIndex = i;
+                        } else {
+                            lastIndex--;
+                        }
+                        Lines.RemoveAt(i);
+                    }
+                }
+                var hasLines = (Lines.Count > 0);
+                foreach (var value in values) {
+                    Lines.Insert(lastIndex, new LineData(lastLine ?? (hasLines ? Lines[0] : null), key, value));
+                    lastIndex++;
+                }
+                FillCache();
+            } else {
+                var hasLines = (Lines.Count > 0);
+                if (!hasLines) {
+                    foreach (var value in values) {
+                        CachedEntries[key] = Lines.Count;
+                        Lines.Add(new LineData(null, key, value));
+                    }
+                    Lines.Add(new LineData());
+                } else if (!Lines[^1].IsEmpty) {
+                    foreach (var value in values) {
+                        CachedEntries[key] = Lines.Count;
+                        Lines.Add(new LineData(Lines[0], key, value));
+                    }
+                } else {
+                    foreach (var value in values) {
+                        CachedEntries[key] = Lines.Count - 1;
+                        Lines.Insert(Lines.Count - 1, new LineData(Lines[0], key, value));
+                    }
+                }
+            }
+
         }
     }
-
 
     public void Delete(string key) {
         if (CachedEntries == null) { FillCache(); }
