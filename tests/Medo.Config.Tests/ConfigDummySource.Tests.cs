@@ -66,6 +66,23 @@ public class ConfigDummySource_Tests {
     }
 
     [TestMethod]
+    public void ConfigDummySource_DateTime() {
+        var config = new ConfigDummySource();
+
+        config.Write("MinValue", DateTime.MinValue);
+        config.Write("MaxValue", DateTime.MaxValue);
+        config.Write("UnixEpoch", DateTime.UnixEpoch);
+
+        Assert.AreEqual("0001-01-01T00:00:00.0000000", config.Read("MinValue", ""));
+        Assert.AreEqual("9999-12-31T23:59:59.9999999", config.Read("MaxValue", ""));
+        Assert.AreEqual("1970-01-01T00:00:00.0000000Z", config.Read("UnixEpoch", ""));
+
+        Assert.AreEqual(DateTime.MinValue, config.Read("MinValue", DateTime.Now));
+        Assert.AreEqual(DateTime.MaxValue, config.Read("MaxValue", DateTime.Now));
+        Assert.AreEqual(DateTime.UnixEpoch, config.Read("UnixEpoch", DateTime.Now));
+    }
+
+    [TestMethod]
     [DataRow([])]
     [DataRow([""])]
     [DataRow(["A", "B"])]

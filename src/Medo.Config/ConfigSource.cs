@@ -226,8 +226,10 @@ public abstract class ConfigSource {
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public DateTime Read(string key, DateTime defaultValue) {
         var value = Read(key)?.Trim();
-        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, out var result)) {
+        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var result)) {
             return result;
+        } else if (DateTime.TryParse(value, CultureInfo.InvariantCulture, out var result2)) {
+            return result2;
         }
         return defaultValue;
     }
