@@ -16,7 +16,7 @@ internal sealed class ConfigDummySource : ConfigSource {
     }
 
 
-    private readonly Dictionary<string, List<string>> Storage = [];
+    private readonly Dictionary<string, string[]> Storage = [];
 
 
     #region ConfigSource
@@ -41,9 +41,7 @@ internal sealed class ConfigDummySource : ConfigSource {
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     protected override string[] ReadCore(string key) {
         if (Storage.TryGetValue(key, out var values)) {
-            if (values.Count > 0) {
-                return [.. values];
-            }
+            return [.. values];
         }
         return [];
     }
@@ -61,13 +59,7 @@ internal sealed class ConfigDummySource : ConfigSource {
         if (values == null || values.Length == 0) {
             Storage.Remove(key);
         } else {
-            if (!Storage.TryGetValue(key, out var list)) {
-                list = [];
-                Storage[key] = list;
-            } else {
-                list.Clear();
-            }
-            list.AddRange(values);
+            Storage[key] = values;
         }
     }
 
