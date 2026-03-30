@@ -224,6 +224,21 @@ public abstract class ConfigSource {
     /// <param name="defaultValue">The value to return if the key does not exist.</param>
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
+    public decimal Read(string key, decimal defaultValue) {
+        var value = Read(key)?.Trim();
+        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var result)) {
+            return result;
+        }
+        return defaultValue;
+    }
+
+    /// <summary>
+    /// Returns the value for the specified key.
+    /// </summary>
+    /// <param name="key">Key.</param>
+    /// <param name="defaultValue">The value to return if the key does not exist.</param>
+    /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public DateTime Read(string key, DateTime defaultValue) {
         var value = Read(key)?.Trim();
         if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var result)) {
@@ -326,6 +341,18 @@ public abstract class ConfigSource {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public void Write(string key, double value) {
+        Write(key, value.ToString("r", CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>
+    /// Writes the value for the specified key.
+    /// If the specified key does not exist, it is created.
+    /// </summary>
+    /// <param name="key">Key.</param>
+    /// <param name="value">The value to write.</param>4
+    /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
+    public void Write(string key, decimal value) {
         Write(key, value.ToString("r", CultureInfo.InvariantCulture));
     }
 

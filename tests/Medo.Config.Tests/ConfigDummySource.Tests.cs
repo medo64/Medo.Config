@@ -66,6 +66,23 @@ public class ConfigDummySource_Tests {
     }
 
     [TestMethod]
+    public void ConfigDummySource_Decimal() {
+        var config = new ConfigDummySource();
+
+        config.Write("MinValue", decimal.MinValue);
+        config.Write("MaxValue", decimal.MaxValue);
+        config.Write("Value", 42.20M);
+
+        Assert.AreEqual("-79228162514264337593543950335", config.Read("MinValue", ""));
+        Assert.AreEqual("79228162514264337593543950335", config.Read("MaxValue", ""));
+        Assert.AreEqual("42.20", config.Read("Value", ""));
+
+        Assert.AreEqual(decimal.MinValue, config.Read("MinValue", 0M));
+        Assert.AreEqual(decimal.MaxValue, config.Read("MaxValue", 0M));
+        Assert.AreEqual(42.20M, config.Read("Value", 0M));
+    }
+
+    [TestMethod]
     public void ConfigDummySource_DateTime() {
         var config = new ConfigDummySource();
 
