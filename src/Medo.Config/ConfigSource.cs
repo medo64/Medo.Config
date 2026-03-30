@@ -312,7 +312,7 @@ public abstract class ConfigSource {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public void Write(string key, float value) {
-        Write(key, value.ToString(CultureInfo.InvariantCulture));
+        Write(key, value.ToString("r", CultureInfo.InvariantCulture));
     }
 
     /// <summary>
@@ -324,7 +324,7 @@ public abstract class ConfigSource {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public void Write(string key, double value) {
-        Write(key, value.ToString(CultureInfo.InvariantCulture));
+        Write(key, value.ToString("r", CultureInfo.InvariantCulture));
     }
 
     /// <summary>

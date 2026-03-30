@@ -40,8 +40,8 @@ public class ConfigDummySource_Tests {
     }
 
     [TestMethod]
-    [DataRow(float.MinValue, "-3.4028235E+38")]
-    [DataRow(float.MaxValue, "3.4028235E+38")]
+    [DataRow(float.MinValue, "-3.4028235e+38")]
+    [DataRow(float.MaxValue, "3.4028235e+38")]
     [DataRow((float)Math.PI, "3.1415927")]
     [DataRow(42.0f, "42")]
     [DataRow(-42.0f, "-42")]
@@ -53,8 +53,8 @@ public class ConfigDummySource_Tests {
     }
 
     [TestMethod]
-    [DataRow(double.MinValue, "-1.7976931348623157E+308")]
-    [DataRow(double.MaxValue, "1.7976931348623157E+308")]
+    [DataRow(double.MinValue, "-1.7976931348623157e+308")]
+    [DataRow(double.MaxValue, "1.7976931348623157e+308")]
     [DataRow(Math.PI, "3.141592653589793")]
     [DataRow(42.0, "42")]
     [DataRow(-42.0, "-42")]

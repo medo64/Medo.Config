@@ -49,7 +49,6 @@ public class ConfigFileSource_Tests {
     [TestMethod]
     public void ConfigFileSource_EscapeCrLf() {
         using var tempFile = new TempFile();
-
         var source = new ConfigFileSource(tempFile.FileName);
         source.Write("Test", " A\r\nB C ");
 
