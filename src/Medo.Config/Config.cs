@@ -177,7 +177,17 @@ public static class Config {
 
     #endregion Files
 
-    #region Shortcuts
+    #region Read
+
+    /// <summary>
+    /// Returns the value for the specified key or null if value is not found.
+    /// </summary>
+    /// <param name="key">Key.</param>
+    /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
+    public static string? Read(string key) {
+        return User.Read(key) ?? System.Read(key);
+    }
 
     /// <summary>
     /// Returns the value for the specified key from the user configuration file.
@@ -264,6 +274,22 @@ public static class Config {
     }
 
     /// <summary>
+    /// Returns all the values for the specified key.
+    /// </summary>
+    /// <param name="key">Key.</param>
+    /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
+    public static string[] ReadMany(string key) {
+        var user = User.ReadMany(key);
+        if (user.Length > 0) { return user; }
+        return System.ReadMany(key);
+    }
+
+    #endregion Read
+
+    #region Write
+
+    /// <summary>
     /// Writes the value for the specified key to the user configuration file.
     /// If the specified key does not exist, it is created.
     /// </summary>
@@ -345,6 +371,29 @@ public static class Config {
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static void Write(string key, DateTime value) {
         User.Write(key, value);
+    }
+
+    /// <summary>
+    /// Writes the values for the specified key.
+    /// If the specified key does not exist, it is created.
+    /// If value is empty, key is deleted.
+    /// </summary>
+    /// <param name="key">Key.</param>
+    /// <param name="values">The value to write.</param>
+    /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
+    public static void WriteMany(string key, string[] values) {
+        User.WriteMany(key, values);
+    }
+
+    /// <summary>
+    /// Deletes key.
+    /// </summary>
+    /// <param name="key">Key.</param>
+    /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
+    public static void Delete(string key) {
+        User.Delete(key);
     }
 
     #endregion Shortcuts
