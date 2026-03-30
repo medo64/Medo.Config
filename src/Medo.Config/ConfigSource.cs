@@ -351,14 +351,20 @@ public abstract class ConfigSource {
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public void Delete(string key) {
         ValidateKey(ref key);
-        lock (SyncRoot) { DeleteCore(key); }
+        lock (SyncRoot) {
+            DeleteCore(key);
+            SaveCore();
+        }
     }
 
     /// <summary>
     /// Deletes all settings.
     /// </summary>
     public void Clear() {
-        lock (SyncRoot) { ClearCore(); }
+        lock (SyncRoot) {
+            ClearCore();
+            SaveCore();
+        }
     }
 
     #endregion Delete

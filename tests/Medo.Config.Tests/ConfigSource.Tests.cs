@@ -232,6 +232,26 @@ public class ConfigSource_Tests {
     }
 
     [TestMethod]
+    public void ConfigSource_RemoveSingle() {
+        lock (SingleTestSync) {
+            using var loader = new ConfigLoader("Remove.conf.raw", "Remove.Good.conf.raw");
+            Config.Delete("Key1");
+
+            Assert.AreEqual(loader.GoodText, File.ReadAllText(loader.FileName));
+        }
+    }
+
+    [TestMethod]
+    public void ConfigSource_RemoveMulti() {
+        lock (SingleTestSync) {
+            using var loader = new ConfigLoader("RemoveMulti.conf.raw", "RemoveMulti.Good.conf.raw");
+            Config.Delete("Key2");
+
+            Assert.AreEqual(loader.GoodText, File.ReadAllText(loader.FileName));
+        }
+    }
+
+    [TestMethod]
     public void ConfigSource_ReadMulti() {
         lock (SingleTestSync) {
             using var loader = new ConfigLoader("RemoveMulti.conf.raw");
@@ -356,6 +376,8 @@ public class ConfigSource_Tests {
 
             Assert.IsNull(Config.Read("Key1"));
             Assert.IsNull(Config.Read("Key2"));
+
+            Assert.AreEqual(loader.GoodText, File.ReadAllText(loader.FileName));
         }
     }
 
