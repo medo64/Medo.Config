@@ -21,13 +21,15 @@ public static class Config {
     /// Application name will be determined from AssemblyProduct, AssemblyTitle, or assembly name.
     /// The following default locations will be used:
     /// * Windows:
-    /// ** System: (none)
-    /// ** User: ~/ApplicationData/[ApplicationName]/[ApplicationName].conf
-    /// ** State: ~/ApplicationData/[ApplicationName]/[ApplicationName].state
+    /// ** System: %ProgramData%/[ApplicationName]/[ApplicationName].conf
+    /// ** User: %AppData%/[ApplicationName]/[ApplicationName].conf
+    /// ** State: %AppData%/[ApplicationName]/[ApplicationName].state
+    /// ** Recent: %AppData%/[ApplicationName]/[ApplicationName].recent
     /// * Other:
     /// ** System: /etc/[applicationname]/[applicationname].conf
     /// ** User: ~/.config/[applicationname]/[applicationname].conf ($XDG_CONFIG_HOME)
     /// ** State: ~/.local/state/[applicationname]/[applicationname].state ($XDG_STATE_HOME)
+    /// ** Recent: ~/.local/state/[applicationname]/[applicationname].recent ($XDG_STATE_HOME)
     /// </summary>
     private static void Initialize() {
         lock (SyncRoot) {
@@ -75,7 +77,7 @@ public static class Config {
             string recentPath;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                systemConfigPath = "";
+                systemConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), applicationName, applicationName + ".conf");
                 userConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".conf");
                 stateConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".state");
                 recentPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".recent");

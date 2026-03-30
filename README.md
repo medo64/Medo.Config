@@ -45,10 +45,10 @@ By default, application name is inferred from assembly metadata
 
 On Windows:
 
-- System: not used
-- User: `%APPDATA%\[ApplicationName]\[ApplicationName].conf`
-- State: `%APPDATA%\[ApplicationName]\[ApplicationName].state`
-- Recent: `%APPDATA%\[ApplicationName]\[ApplicationName].recent`
+- System: `%ProgramData%\[ApplicationName]\[ApplicationName].conf`
+- User: `%AppData%\[ApplicationName]\[ApplicationName].conf`
+- State: `%AppData%\[ApplicationName]\[ApplicationName].state`
+- Recent: `%AppData%\[ApplicationName]\[ApplicationName].recent`
 
 On Linux/macOS and other non-Windows platforms:
 
