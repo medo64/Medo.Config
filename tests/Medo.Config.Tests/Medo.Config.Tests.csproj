@@ -31,6 +31,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="_Resources/Config/*.conf.raw" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../src/Medo.Config/Medo.Config.csproj" />
   </ItemGroup>
 

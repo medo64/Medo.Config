@@ -15,6 +15,15 @@ internal class TempFile : IDisposable {
         return File.ReadAllText(FileName).Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
     }
 
+    public bool Exists() {
+        return File.Exists(FileName);
+    }
+
+    public long Length {
+        get {
+            return new FileInfo(FileName).Length;
+        }
+    }
 
     public void Dispose() {
         if (File.Exists(FileName)) {

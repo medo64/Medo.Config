@@ -58,4 +58,45 @@ public class ConfigFileSource_Tests {
         Assert.AreEqual("", lines[1]);
     }
 
+    [TestMethod]
+    public void ConfigFileSource_NullKey() {
+        using var tempFile = new TempFile();
+        var source = new ConfigFileSource(tempFile.FileName);
+
+        var ex = Assert.Throws<ArgumentNullException>(() => {
+            source.Read(null, "");
+        });
+    }
+
+    [TestMethod]
+    public void ConfigFileSource_EmptyKey() {
+        using var tempFile = new TempFile();
+        var source = new ConfigFileSource(tempFile.FileName);
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => {
+            source.Read("", "");
+        });
+    }
+
+    [TestMethod]
+    public void ConfigFileSource_WhitespaceKey() {
+        using var tempFile = new TempFile();
+        var source = new ConfigFileSource(tempFile.FileName);
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => {
+            source.Read("   ", "");
+        });
+    }
+
+    [TestMethod]
+    public void ConfigFileSource_EmptySave() {
+        using var tempFile = new TempFile();
+        var source = new ConfigFileSource(tempFile.FileName);
+
+        Assert.IsFalse(tempFile.Exists());
+        source.Save();
+        Assert.IsTrue(tempFile.Exists());
+        Assert.AreEqual(0, tempFile.Length);
+    }
+
 }

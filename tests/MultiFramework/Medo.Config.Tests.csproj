@@ -30,6 +30,9 @@
   <ItemGroup>
     <Compile Include="../Medo.Config.Tests/*.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../Medo.Config.Tests/_Resources/**" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../src/MultiFramework/Medo.Config.csproj" />
