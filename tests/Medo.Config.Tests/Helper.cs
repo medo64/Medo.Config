@@ -23,4 +23,8 @@ internal static class Helper {
         return stream;
     }
 
+    public static string NormalizeLineEndings(string text) {
+        return text.Replace("\r\n", "\n").Replace("\r", "\n");
+    }
+
 }

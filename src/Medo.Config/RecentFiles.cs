@@ -22,7 +22,11 @@ public sealed class RecentFiles : IEnumerable<FileInfo> {
 
 
     private readonly RecentSource Source;
+#if NET10_0_OR_GREATER
     private readonly Lock SyncRoot = new();  // contention unlikely, lock is good enough
+#else
+    private readonly object SyncRoot = new();
+#endif
     private FileInfo[]? FilesCache;
 
 
@@ -31,13 +35,19 @@ public sealed class RecentFiles : IEnumerable<FileInfo> {
     /// </summary>
     /// <param name="index">Index.</param>
     /// <returns></returns>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    /// <exception cref="ArgumentOutOfRangeException">Index must be between 0 and Count</exception>
     public FileInfo this[int index] {
         get {
             lock (SyncRoot) {
                 FilesCache ??= Source.GetFiles();
+#if NET10_0_OR_GREATER
                 ArgumentOutOfRangeException.ThrowIfNegative(index);
                 ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, FilesCache.Length);
+#else
+                if (index < 0 || index >= FilesCache.Length) {
+                    throw new ArgumentOutOfRangeException(nameof(index), index, "Index must be between 0 and Count.");
+                }
+#endif
                 return FilesCache[index];
             }
         }
@@ -59,8 +69,13 @@ public sealed class RecentFiles : IEnumerable<FileInfo> {
     /// Adds a file to the recent files list.
     /// </summary>
     /// <param name="file">File to add.</param>
+    /// <exception cref="ArgumentNullException">File cannot be null.</exception>
     public void Add(FileInfo file) {
+#if NET10_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(file);
+#else
+        if (file is null) { throw new ArgumentNullException(nameof(file), "File cannot be null."); }
+#endif
         lock (SyncRoot) {
             var files = new List<FileInfo>(Source.GetFiles());  // fresh read when adding
             for (int i = 0; i < files.Count; i++) {
@@ -79,8 +94,13 @@ public sealed class RecentFiles : IEnumerable<FileInfo> {
     /// Removes a file from the recent files list.
     /// </summary>
     /// <param name="file">File to remove</param>
+    /// <exception cref="ArgumentNullException">File cannot be null.</exception>
     public void Remove(FileInfo file) {
+#if NET10_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(file);
+#else
+        if (file is null) { throw new ArgumentNullException(nameof(file), "File cannot be null."); }
+#endif
         lock (SyncRoot) {
             var files = new List<FileInfo>(Source.GetFiles());  // fresh read when removing
             for (int i = 0; i < files.Count; i++) {

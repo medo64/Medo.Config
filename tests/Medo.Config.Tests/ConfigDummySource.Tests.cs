@@ -40,22 +40,38 @@ public class ConfigDummySource_Tests {
     }
 
     [TestMethod]
+#if NET10_0_OR_GREATER
     [DataRow(float.MinValue, "-3.4028235e+38")]
     [DataRow(float.MaxValue, "3.4028235e+38")]
     [DataRow((float)Math.PI, "3.1415927")]
+#else  // .NET 4.81 rounds differently than .NET 10
+    [DataRow(float.MinValue, "-3.40282347E+38")]
+    [DataRow(float.MaxValue, "3.40282347E+38")]
+    [DataRow((float)Math.PI, "3.14159274")]
+#endif
     [DataRow(42.0f, "42")]
     [DataRow(-42.0f, "-42")]
     public void ConfigDummySource_Float32(float input, string expected) {
         var config = new ConfigDummySource();
         config.Write("Value", input);
+#if NET10_0_OR_GREATER
         Assert.AreEqual(expected, config.Read("Value", ""));
+#else
+        Assert.AreEqual(expected, config.Read("Value", ""));
+#endif
         Assert.AreEqual(input, config.Read("Value", 0.0f));
     }
 
     [TestMethod]
+#if NET10_0_OR_GREATER
     [DataRow(double.MinValue, "-1.7976931348623157e+308")]
     [DataRow(double.MaxValue, "1.7976931348623157e+308")]
     [DataRow(Math.PI, "3.141592653589793")]
+#else  // .NET 4.81 rounds differently than .NET 10
+    [DataRow(double.MinValue, "-1.7976931348623157E+308")]
+    [DataRow(double.MaxValue, "1.7976931348623157E+308")]
+    [DataRow(Math.PI, "3.1415926535897931")]
+#endif
     [DataRow(42.0, "42")]
     [DataRow(-42.0, "-42")]
     public void ConfigDummySource_Float64(double input, string expected) {
@@ -88,15 +104,21 @@ public class ConfigDummySource_Tests {
 
         config.Write("MinValue", DateTime.MinValue);
         config.Write("MaxValue", DateTime.MaxValue);
+#if NET10_0_OR_GREATER
         config.Write("UnixEpoch", DateTime.UnixEpoch);
+#endif
 
         Assert.AreEqual("0001-01-01T00:00:00.0000000", config.Read("MinValue", ""));
         Assert.AreEqual("9999-12-31T23:59:59.9999999", config.Read("MaxValue", ""));
+#if NET10_0_OR_GREATER
         Assert.AreEqual("1970-01-01T00:00:00.0000000Z", config.Read("UnixEpoch", ""));
+#endif
 
         Assert.AreEqual(DateTime.MinValue, config.Read("MinValue", DateTime.Now));
         Assert.AreEqual(DateTime.MaxValue, config.Read("MaxValue", DateTime.Now));
+#if NET10_0_OR_GREATER
         Assert.AreEqual(DateTime.UnixEpoch, config.Read("UnixEpoch", DateTime.Now));
+#endif
     }
 
     [TestMethod]

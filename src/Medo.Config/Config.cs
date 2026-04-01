@@ -13,7 +13,11 @@ using System.Threading;
 /// </summary>
 public static class Config {
 
+#if NET10_0_OR_GREATER
     private static readonly Lock SyncRoot = new();
+#else
+    private static readonly object SyncRoot = new();
+#endif
     private static bool WasInitialized;
 
     /// <summary>

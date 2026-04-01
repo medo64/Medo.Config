@@ -103,7 +103,7 @@ public class ConfigSource_Tests {
             Config.Write("Key1", "Value 1");
             Config.Write("Key2", "Value 2");
 
-            Assert.AreEqual(loader.GoodText.ReplaceLineEndings(), File.ReadAllText(loader.FileName).ReplaceLineEndings());
+            Assert.AreEqual(Helper.NormalizeLineEndings(loader.GoodText), Helper.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
         }
     }
 
@@ -114,7 +114,7 @@ public class ConfigSource_Tests {
             Config.Write("Key1", "Value 1");
             Config.Write("Key2", "Value 2");
 
-            Assert.AreEqual(loader.GoodText.ReplaceLineEndings(), File.ReadAllText(loader.FileName).ReplaceLineEndings());
+            Assert.AreEqual(Helper.NormalizeLineEndings(loader.GoodText), Helper.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
         }
     }
 
@@ -166,6 +166,7 @@ public class ConfigSource_Tests {
         }
     }
 
+#if NET10_0_OR_GREATER  // .NET 4.81 rounds differently than .NET
     [TestMethod]
     public void ConfigSource_SpacingPreservedOnAdd() {
         lock (SingleTestSync) {
@@ -180,6 +181,7 @@ public class ConfigSource_Tests {
             Assert.AreEqual(loader.GoodText, File.ReadAllText(loader.FileName));
         }
     }
+#endif
 
     [TestMethod]
     public void ConfigSource_WriteToEmpty() {
@@ -188,7 +190,7 @@ public class ConfigSource_Tests {
             Config.Write("Key1", "Value 1a");
             Config.Write("Key2", "Value 2a");
 
-            Assert.AreEqual(loader.GoodText.ReplaceLineEndings(), File.ReadAllText(loader.FileName).ReplaceLineEndings());
+            Assert.AreEqual(Helper.NormalizeLineEndings(loader.GoodText), Helper.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
         }
     }
 
@@ -283,7 +285,7 @@ public class ConfigSource_Tests {
             Config.User.WriteMany("Key2", new string[] { "Value 2a", "Value 2b", "Value 2c" });
             Config.Write("Key3", "Value 3");
 
-            Assert.AreEqual(loader.GoodText.ReplaceLineEndings(), File.ReadAllText(loader.FileName).ReplaceLineEndings());
+            Assert.AreEqual(Helper.NormalizeLineEndings(loader.GoodText), Helper.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
 
             Assert.AreEqual("Value 1", Config.Read("Key1", ""));
             Assert.AreEqual("Value 3", Config.Read("Key3", ""));
@@ -336,7 +338,9 @@ public class ConfigSource_Tests {
             Config.Write("Double Infinity+", double.PositiveInfinity);
             Config.Write("Double Infinity-", double.NegativeInfinity);
 
-            Assert.AreEqual(loader.GoodText.ReplaceLineEndings(), File.ReadAllText(loader.FileName).ReplaceLineEndings());
+#if NET10_0_OR_GREATER  // .NET 4.81 rounds differently than .NET
+            Assert.AreEqual(Helper.NormalizeLineEndings(loader.GoodText), Helper.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
+#endif
 
             using var loader2 = new ConfigLoader(loader.FileName, resourceFileNameGood: "WriteConverted.Good.conf.raw");
             Assert.AreEqual(42, Config.Read("Integer", 0));
@@ -396,7 +400,11 @@ public class ConfigSource_Tests {
 
     #region Utils
 
+#if NET10_0_OR_GREATER
     private readonly Lock SingleTestSync = new();
+#else
+    private readonly object SingleTestSync = new();
+#endif
 
     private class ConfigLoader : IDisposable {
 

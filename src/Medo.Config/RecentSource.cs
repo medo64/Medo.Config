@@ -28,7 +28,11 @@ public abstract class RecentSource {
     public string FileName { get; }
 
 
+#if NET10_0_OR_GREATER
     private readonly Lock SyncRoot = new();
+#else
+    private readonly object SyncRoot = new();
+#endif
 
 
     #region Abstract
@@ -86,6 +90,7 @@ public abstract class RecentSource {
     /// Gets or sets the maximum number of recent files to keep.
     /// Value must be between 1 and 100.
     /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">Value must be between 1 and 100.</exception>
     public int MaxCount {
         get {
             lock (SyncRoot) {
@@ -93,8 +98,14 @@ public abstract class RecentSource {
             }
         }
         set {
+#if NET10_0_OR_GREATER
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
             ArgumentOutOfRangeException.ThrowIfGreaterThan(value, 100);
+#else
+            if (value <=0 || value > 100) {
+                throw new ArgumentOutOfRangeException(nameof(value), "Value must be between 1 and 100.");
+            }
+#endif
             lock (SyncRoot) {
                 field = value;
             }

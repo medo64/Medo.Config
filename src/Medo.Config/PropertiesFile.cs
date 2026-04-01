@@ -313,7 +313,11 @@ internal class PropertiesFile {
                 var maxSuffixLength = firstKeyTotalLength - totalLengthWithoutSuffix;
                 if (maxSuffixLength < 1) { maxSuffixLength = 1; } //leave at least one space
                 if (SeparatorSuffix?.Length > maxSuffixLength) {
+#if NET10_0_OR_GREATER
                     SeparatorSuffix = SeparatorSuffix[..maxSuffixLength];
+#else
+                    SeparatorSuffix = SeparatorSuffix.Substring(maxSuffixLength);
+#endif
                 }
             }
         }
@@ -369,7 +373,8 @@ internal class PropertiesFile {
             return sb.ToString();
         }
 
-        private static void EscapeIntoStringBuilder(StringBuilder sb, string text, bool isKey = false) {
+        private static void EscapeIntoStringBuilder(StringBuilder sb, string? text, bool isKey = false) {
+            if (text is null) { return; }
             for (var i = 0; i < text.Length; i++) {
                 var ch = text[i];
                 switch (ch) {
@@ -445,9 +450,7 @@ internal class PropertiesFile {
         for (var i = 0; i < Lines.Count; i++) {
             var line = Lines[i];
             if (!line.IsEmpty && line.Key is not null) {
-                if (!CachedEntries.TryAdd(line.Key, i)) {
-                    CachedEntries[line.Key] = i;  // last key takes precedence
-                }
+                CachedEntries[line.Key] = i;  // last key takes precedence
             }
         }
     }
@@ -484,7 +487,11 @@ internal class PropertiesFile {
                     CachedEntries.Add(key, Lines.Count);
                     Lines.Add(newData);
                     Lines.Add(new LineData());
+#if NET10_0_OR_GREATER
                 } else if (!Lines[^1].IsEmpty) {
+#else
+                } else if (!Lines[Lines.Count - 1].IsEmpty) {
+#endif
                     CachedEntries.Add(key, Lines.Count);
                     Lines.Add(newData);
                 } else {
@@ -524,7 +531,11 @@ internal class PropertiesFile {
                         Lines.Add(new LineData(null, key, value));
                     }
                     Lines.Add(new LineData());
+#if NET10_0_OR_GREATER
                 } else if (!Lines[^1].IsEmpty) {
+#else
+                } else if (!Lines[Lines.Count - 1].IsEmpty) {
+#endif
                     foreach (var value in values) {
                         CachedEntries[key] = Lines.Count;
                         Lines.Add(new LineData(Lines[0], key, value));

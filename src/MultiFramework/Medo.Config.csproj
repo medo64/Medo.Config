@@ -7,10 +7,11 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <IsAotCompatible>true</IsAotCompatible>
+    <IsAotCompatible Condition="'$(TargetFramework)' != 'net481'">true</IsAotCompatible>
+    <IsAotCompatible Condition="'$(TargetFramework)' == 'net481'">false</IsAotCompatible>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -28,7 +28,11 @@ public abstract class ConfigSource {
     public string FileName { get; }
 
 
+#if NET10_0_OR_GREATER
     private readonly Lock SyncRoot = new();
+#else
+    private readonly object SyncRoot = new();
+#endif
     private bool WasLoaded;
 
 
@@ -115,7 +119,11 @@ public abstract class ConfigSource {
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public string? Read(string key) {
         var values = ReadMany(key);
+#if NET10_0_OR_GREATER
         return (values.Length > 0) ? values[^1] : null;
+#else
+        return (values.Length > 0) ? values[values.Length - 1] : null;
+#endif
     }
 
     /// <summary>
@@ -243,7 +251,7 @@ public abstract class ConfigSource {
         var value = Read(key)?.Trim();
         if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var result)) {
             return result;
-        } else if (DateTime.TryParse(value, CultureInfo.InvariantCulture, out var result2)) {
+        } else if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var result2)) {
             return result2;
         }
         return defaultValue;
@@ -353,7 +361,11 @@ public abstract class ConfigSource {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public void Write(string key, decimal value) {
+#if NET10_0_OR_GREATER
         Write(key, value.ToString("r", CultureInfo.InvariantCulture));
+#else
+        Write(key, value.ToString(CultureInfo.InvariantCulture));
+#endif
     }
 
     /// <summary>
@@ -404,7 +416,11 @@ public abstract class ConfigSource {
     /// </summary>
     /// <param name="key">Argument.</param>
     /// <param name="paramName">Param name.</param>
+#if NET10_0_OR_GREATER
     private static void ValidateKey(ref string key, [CallerArgumentExpression(nameof(key))] string? paramName = null) {
+#else
+    private static void ValidateKey(ref string key, string? paramName = null) {
+#endif
         if (key is null) { throw new ArgumentNullException(paramName, "Key cannot be null."); }
         key = key.Trim();
         if (string.IsNullOrEmpty(key)) { throw new ArgumentOutOfRangeException(paramName, "Key cannot be empty."); }
