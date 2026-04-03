@@ -103,23 +103,38 @@ public static class Config {
     /// <summary>
     /// Initializes the configuration system with specified files.
     /// This is optional and only needed if you want to use a custom setup.
-    /// Files that are not specified will be replaced with in-memory configuration.
+    /// Files that are not specified will be replaced with in-memory configuration
+    /// Exceptions during access will be ignored.
     /// </summary>
     /// <param name="systemConfigPath">Full path to the system configuration file or null if system configuration file is not to be used.</param>
     /// <param name="userConfigPath">Full path to the user configuration file.</param>
     /// <param name="stateConfigPath">Full path to the state configuration file.</param>
     /// <param name="recentPath">Full path to the recent file list.</param>
     public static void Initialize(string? userConfigPath, string? systemConfigPath, string? stateConfigPath, string? recentPath) {
+        Initialize(userConfigPath, systemConfigPath, stateConfigPath, recentPath, throwAccessExceptions: false);
+    }
+
+    /// <summary>
+    /// Initializes the configuration system with specified files.
+    /// This is optional and only needed if you want to use a custom setup.
+    /// Files that are not specified will be replaced with in-memory configuration.
+    /// </summary>
+    /// <param name="systemConfigPath">Full path to the system configuration file or null if system configuration file is not to be used.</param>
+    /// <param name="userConfigPath">Full path to the user configuration file.</param>
+    /// <param name="stateConfigPath">Full path to the state configuration file.</param>
+    /// <param name="recentPath">Full path to the recent file list.</param>
+    /// <param name="throwAccessExceptions">If true, exceptions during file access will not be ignored.</param>
+    public static void Initialize(string? userConfigPath, string? systemConfigPath, string? stateConfigPath, string? recentPath, bool throwAccessExceptions) {
         lock (SyncRoot) {
             var userConfigFile = !string.IsNullOrEmpty(userConfigPath) ? new FileInfo(userConfigPath) : null;
             var systemConfigFile = !string.IsNullOrEmpty(systemConfigPath) ? new FileInfo(systemConfigPath) : null;
             var stateConfigFile = !string.IsNullOrEmpty(stateConfigPath) ? new FileInfo(stateConfigPath) : null;
             var recentFile = !string.IsNullOrEmpty(recentPath) ? new FileInfo(recentPath) : null;
 
-            _system = (systemConfigFile != null) ? new ConfigFileSource(systemConfigFile.FullName) : new ConfigDummySource();
-            _user = (userConfigFile != null) ? new ConfigFileSource(userConfigFile.FullName) : new ConfigDummySource();
-            _state = (stateConfigFile != null) ? new ConfigFileSource(stateConfigFile.FullName) : new ConfigDummySource();
-            _recent = (recentFile != null) ? new RecentFileSource(recentFile.FullName) : new RecentDummySource();
+            _system = (systemConfigFile != null) ? new ConfigFileSource(systemConfigFile.FullName, throwAccessExceptions) : new ConfigDummySource();
+            _user = (userConfigFile != null) ? new ConfigFileSource(userConfigFile.FullName, throwAccessExceptions) : new ConfigDummySource();
+            _state = (stateConfigFile != null) ? new ConfigFileSource(stateConfigFile.FullName, throwAccessExceptions) : new ConfigDummySource();
+            _recent = (recentFile != null) ? new RecentFileSource(recentFile.FullName, throwAccessExceptions) : new RecentDummySource();
 
             WasInitialized = true;
         }

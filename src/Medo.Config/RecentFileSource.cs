@@ -18,9 +18,21 @@ public sealed class RecentFileSource : RecentSource {
     /// </summary>
     /// <param name="filePath">The path to the configuration file.</param>
     public RecentFileSource(string filePath)
-        : base(new FileInfo(filePath).FullName) {
+        : this(filePath, throwAccessExceptions: false) {
     }
 
+    /// <summary>
+    /// Creates a new instance.
+    /// </summary>
+    /// <param name="filePath">The path to the configuration file.</param>
+    /// <param name="throwAccessExceptions">If true, exceptions during file access will not be ignored.</param>
+    public RecentFileSource(string filePath, bool throwAccessExceptions)
+        : base(new FileInfo(filePath).FullName) {
+        ThrowAccessExceptions = throwAccessExceptions;
+    }
+
+
+    private readonly bool ThrowAccessExceptions;
 
     private static readonly Encoding Utf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     private static readonly string[] EolSeparators = ["\r\n", "\n", "\r"];
@@ -44,6 +56,7 @@ public sealed class RecentFileSource : RecentSource {
                                         or SecurityException
                                         or UnauthorizedAccessException) {
             Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+            if (ThrowAccessExceptions) { throw; }
         }
 
         if (allText != null) {
@@ -58,6 +71,7 @@ public sealed class RecentFileSource : RecentSource {
                                                 or PathTooLongException
                                                 or UnauthorizedAccessException) {
                     Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+                    if (ThrowAccessExceptions) { throw; }
                 }
             }
         }
@@ -92,6 +106,7 @@ public sealed class RecentFileSource : RecentSource {
                     } catch (Exception ex) when (ex is IOException
                                                     or UnauthorizedAccessException) {
                         Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+                        if (ThrowAccessExceptions) { throw; }
                         break;
                     }
                 }
@@ -104,6 +119,7 @@ public sealed class RecentFileSource : RecentSource {
                                         or SecurityException
                                         or UnauthorizedAccessException) {
             Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+            if (ThrowAccessExceptions) { throw; }
         }
     }
 

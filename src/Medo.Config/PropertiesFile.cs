@@ -14,17 +14,21 @@ internal class PropertiesFile {
     private const StringComparison KeyComparison = StringComparison.OrdinalIgnoreCase;
 
     private readonly string FileName;
+    private readonly bool ThrowAccessExceptions;
     private readonly string LineEnding;
     private readonly List<LineData> Lines = [];
 
-    public PropertiesFile(string fileName) {
+    public PropertiesFile(string fileName, bool throwAccessExceptions) {
         FileName = fileName;
+        ThrowAccessExceptions = throwAccessExceptions;
 
         string? fileContent = null;
         try {
             fileContent = File.ReadAllText(fileName, Utf8);
-        } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+        } catch (Exception ex) when (ex is IOException
+                                        or UnauthorizedAccessException) {
             Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+            if (ThrowAccessExceptions) { throw; }
         }
 
         string? lineEnding = null;
@@ -264,8 +268,10 @@ internal class PropertiesFile {
                 while (directoryStack.Count > 0) {
                     try {
                         Directory.CreateDirectory(directoryStack.Pop());
-                    } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+                    } catch (Exception ex) when (ex is IOException
+                                                    or UnauthorizedAccessException) {
                         Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+                        if (ThrowAccessExceptions) { throw; }
                         break;
                     }
                 }
@@ -273,8 +279,10 @@ internal class PropertiesFile {
 
             File.WriteAllText(FileName, fileContent, Utf8);
             return true;
-        } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+        } catch (Exception ex) when (ex is IOException
+                                        or UnauthorizedAccessException) {
             Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+            if (ThrowAccessExceptions) { throw; }
             return false;
         }
     }

@@ -13,8 +13,17 @@ public sealed class ConfigFileSource : ConfigSource {
     /// </summary>
     /// <param name="filePath">The path to the configuration file.</param>
     public ConfigFileSource(string filePath)
+        : this(filePath, throwAccessExceptions: false) {
+    }
+
+    /// <summary>
+    /// Creates a new instance.
+    /// </summary>
+    /// <param name="filePath">The path to the configuration file.</param>
+    /// <param name="throwAccessExceptions">If true, exceptions during file access will not be ignored.</param>
+    public ConfigFileSource(string filePath, bool throwAccessExceptions)
         : base(new FileInfo(filePath).FullName) {
-        PropertiesFile = new PropertiesFile(filePath);
+        PropertiesFile = new PropertiesFile(filePath, throwAccessExceptions);
     }
 
 
