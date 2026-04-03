@@ -37,12 +37,14 @@ public sealed class RecentFileSource : RecentSource {
         string? allText = null;
         try {  // ignore errors during write
             allText = File.ReadAllText(FileName, Utf8Encoding);
-        } catch (PathTooLongException) {
-        } catch (DirectoryNotFoundException) {
-        } catch (IOException) {
-        } catch (UnauthorizedAccessException) {
-        } catch (NotSupportedException) {
-        } catch (SecurityException) { }
+        } catch (Exception ex) when (ex is DirectoryNotFoundException
+                                        or IOException
+                                        or NotSupportedException
+                                        or PathTooLongException
+                                        or SecurityException
+                                        or UnauthorizedAccessException) {
+            Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+        }
 
         if (allText != null) {
             var lines = allText.Split(EolSeparators, StringSplitOptions.RemoveEmptyEntries);
@@ -51,10 +53,12 @@ public sealed class RecentFileSource : RecentSource {
                     var filePath = UnescapeText(line);
                     if (string.IsNullOrEmpty(filePath)) { continue; }  // ignore empty file names
                     files.Add(new FileInfo(filePath));
-                } catch (SecurityException) {
-                } catch (UnauthorizedAccessException) {
-                } catch (PathTooLongException) {
-                } catch (NotSupportedException) { }
+                } catch (Exception ex) when (ex is SecurityException
+                                                or NotSupportedException
+                                                or PathTooLongException
+                                                or UnauthorizedAccessException) {
+                    Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+                }
             }
         }
 
@@ -85,20 +89,22 @@ public sealed class RecentFileSource : RecentSource {
                 while (directoryStack.Count > 0) {
                     try {
                         Directory.CreateDirectory(directoryStack.Pop());
-                    } catch (IOException) {
-                        break;
-                    } catch (UnauthorizedAccessException) {
+                    } catch (Exception ex) when (ex is IOException
+                                                    or UnauthorizedAccessException) {
+                        Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
                         break;
                     }
                 }
             }
             File.WriteAllText(FileName, sb.ToString(), Utf8Encoding);
-        } catch (PathTooLongException) {
-        } catch (DirectoryNotFoundException) {
-        } catch (IOException) {
-        } catch (UnauthorizedAccessException) {
-        } catch (NotSupportedException) {
-        } catch (SecurityException) { }
+        } catch (Exception ex) when (ex is DirectoryNotFoundException
+                                        or IOException
+                                        or NotSupportedException
+                                        or PathTooLongException
+                                        or SecurityException
+                                        or UnauthorizedAccessException) {
+            Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+        }
     }
 
     #endregion  RecentSource

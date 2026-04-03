@@ -23,8 +23,9 @@ internal class PropertiesFile {
         string? fileContent = null;
         try {
             fileContent = File.ReadAllText(fileName, Utf8);
-        } catch (IOException) {
-        } catch (UnauthorizedAccessException) { }
+        } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+            Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
+        }
 
         string? lineEnding = null;
         if (fileContent != null) {
@@ -263,9 +264,8 @@ internal class PropertiesFile {
                 while (directoryStack.Count > 0) {
                     try {
                         Directory.CreateDirectory(directoryStack.Pop());
-                    } catch (IOException) {
-                        break;
-                    } catch (UnauthorizedAccessException) {
+                    } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+                        Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
                         break;
                     }
                 }
@@ -273,9 +273,8 @@ internal class PropertiesFile {
 
             File.WriteAllText(FileName, fileContent, Utf8);
             return true;
-        } catch (IOException) {
-            return false;
-        } catch (UnauthorizedAccessException) {
+        } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+            Debug.WriteLine($"[Config] {ex.GetType().Name}: {ex.Message}");
             return false;
         }
     }
