@@ -2,3 +2,4 @@ PROJECT_NAME:             Medo.Config
 PROJECT_ENTRYPOINT:       src/Medo.Config/Medo.Config.csproj
 PACKAGE_NUGET:            Medo.Config
 PACKAGE_NUGET_ENTRYPOINT: src/MultiFramework/Medo.Config.csproj
+PUBLISH_GITHUB_URL:       https://github.com/medo64/Medo.Config
