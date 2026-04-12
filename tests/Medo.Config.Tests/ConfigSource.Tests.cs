@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Threading;
 using Medo;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -13,7 +12,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_EmptyLinesCRLF() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("EmptyLinesCRLF.conf.raw");
 
             Config.User.Save();
@@ -24,7 +23,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_EmptyLinesLF() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("EmptyLinesLF.conf.raw");
 
             Config.User.Save();
@@ -35,7 +34,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_EmptyLinesCR() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("EmptyLinesCR.conf.raw");
 
             Config.User.Save();
@@ -46,7 +45,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_EmptyLinesMixed() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("EmptyLinesMixed.conf.raw", "EmptyLinesMixed.Good.conf.raw");
 
             Config.User.Save();
@@ -57,7 +56,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_CommentsOnly() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("CommentsOnly.conf.raw", "CommentsOnly.Good.conf.raw");
 
             Config.User.Save();
@@ -68,7 +67,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_CommentsWithValues() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("CommentsWithValues.conf.raw");
 
             Config.User.Save();
@@ -80,7 +79,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_SpacingEscape() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("SpacingEscape.conf.raw", "SpacingEscape.Good.conf.raw");
             Assert.AreEqual(" Value 1", Config.Read("Key1", ""));
             Assert.AreEqual("Value 2 ", Config.Read("Key2", ""));
@@ -98,29 +97,29 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_WriteBasic() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("Empty.conf.raw", "WriteBasic.Good.conf.raw");
             Config.Write("Key1", "Value 1");
             Config.Write("Key2", "Value 2");
 
-            Assert.AreEqual(Helper.NormalizeLineEndings(loader.GoodText), Helper.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
+            Assert.AreEqual(Helpers.NormalizeLineEndings(loader.GoodText), Helpers.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
         }
     }
 
     [TestMethod]
     public void ConfigSource_WriteNoEmptyLine() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("WriteNoEmptyLine.conf.raw", "WriteNoEmptyLine.Good.conf.raw");
             Config.Write("Key1", "Value 1");
             Config.Write("Key2", "Value 2");
 
-            Assert.AreEqual(Helper.NormalizeLineEndings(loader.GoodText), Helper.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
+            Assert.AreEqual(Helpers.NormalizeLineEndings(loader.GoodText), Helpers.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
         }
     }
 
     [TestMethod]
     public void ConfigSource_WriteSameSeparatorEquals() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("WriteSameSeparatorEquals.conf.raw", "WriteSameSeparatorEquals.Good.conf.raw");
             Config.Write("Key1", "Value 1");
             Config.Write("Key2", "Value 2");
@@ -131,7 +130,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_WriteSameSeparatorSpace() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("WriteSameSeparatorSpace.conf.raw", "WriteSameSeparatorSpace.Good.conf.raw");
             Config.Write("Key1", "Value 1");
             Config.Write("Key2", "Value 2");
@@ -142,7 +141,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_Replace() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("Replace.conf.raw", "Replace.Good.conf.raw");
             Config.Write("Key1", "Value 1a");
             Config.Write("Key2", "Value 2a");
@@ -156,7 +155,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_SpacingPreserved() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("SpacingPreserved.conf.raw", "SpacingPreserved.Good.conf.raw");
             Config.Write("KeyOne", "Value 1a");
             Config.Write("KeyTwo", "Value 2b");
@@ -169,7 +168,7 @@ public class ConfigSource_Tests {
 #if NET10_0_OR_GREATER  // .NET 4.81 rounds differently than .NET
     [TestMethod]
     public void ConfigSource_SpacingPreservedOnAdd() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("SpacingPreservedOnAdd.conf.raw", "SpacingPreservedOnAdd.Good.conf.raw");
             Config.Write("One", "Value 1a");
             Config.User.WriteMany("Two", new string[] { "Value 2a", "Value 2b" });
@@ -185,18 +184,18 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_WriteToEmpty() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader(null, "Replace.Good.conf.raw");
             Config.Write("Key1", "Value 1a");
             Config.Write("Key2", "Value 2a");
 
-            Assert.AreEqual(Helper.NormalizeLineEndings(loader.GoodText), Helper.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
+            Assert.AreEqual(Helpers.NormalizeLineEndings(loader.GoodText), Helpers.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
         }
     }
 
     [TestMethod]
     public void ConfigSource_SaveInNonexistingDirectory1() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             var propertiesFile = Path.Combine(Path.GetTempPath(), "ConfigDirectory", "Test.conf.raw");
             try {
                 Directory.Delete(Path.Combine(Path.GetTempPath(), "ConfigDirectory"), true);
@@ -213,7 +212,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_SaveInNonexistingDirectory2() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             var propertiesFile = Path.Combine(Path.GetTempPath(), "ConfigDirectoryOuter", "ConfigDirectoryInner", "Test.conf.raw");
             try {
                 Directory.Delete(Path.Combine(Path.GetTempPath(), "ConfigDirectoryOuter"), true);
@@ -230,7 +229,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_SaveInNonexistingDirectory3() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             var propertiesFile = Path.Combine(Path.GetTempPath(), "ConfigDirectoryOuter", "ConfigDirectoryMiddle", "ConfigDirectoryInner", "Test.conf.raw");
             try {
                 Directory.Delete(Path.Combine(Path.GetTempPath(), "ConfigDirectoryOuter"), true);
@@ -247,7 +246,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_RemoveSingle() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("Remove.conf.raw", "Remove.Good.conf.raw");
             Config.Delete("Key1");
 
@@ -257,7 +256,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_RemoveMulti() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("RemoveMulti.conf.raw", "RemoveMulti.Good.conf.raw");
             Config.Delete("Key2");
 
@@ -267,7 +266,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_ReadMulti() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("RemoveMulti.conf.raw");
             var list = new List<string>(Config.User.ReadMany("Key2"));
             Assert.AreEqual(3, list.Count);
@@ -279,13 +278,13 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_MultiWrite() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader(null, resourceFileNameGood: "WriteMulti.Good.conf.raw");
             Config.Write("Key1", "Value 1");
             Config.User.WriteMany("Key2", new string[] { "Value 2a", "Value 2b", "Value 2c" });
             Config.Write("Key3", "Value 3");
 
-            Assert.AreEqual(Helper.NormalizeLineEndings(loader.GoodText), Helper.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
+            Assert.AreEqual(Helpers.NormalizeLineEndings(loader.GoodText), Helpers.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
 
             Assert.AreEqual("Value 1", Config.Read("Key1", ""));
             Assert.AreEqual("Value 3", Config.Read("Key3", ""));
@@ -300,7 +299,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_MultiReplace() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("WriteMulti.conf.raw", resourceFileNameGood: "WriteMulti.Good.conf.raw");
             Config.User.WriteMany("Key2", new string[] { "Value 2a", "Value 2b", "Value 2c" });
             Config.User.Save();
@@ -319,7 +318,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_TestConversion() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader(null, resourceFileNameGood: "WriteConverted.Good.conf.raw");
             Config.Write("Integer", 42);
             Config.Write("Integer Min", int.MinValue);
@@ -339,7 +338,7 @@ public class ConfigSource_Tests {
             Config.Write("Double Infinity-", double.NegativeInfinity);
 
 #if NET10_0_OR_GREATER  // .NET 4.81 rounds differently than .NET
-            Assert.AreEqual(Helper.NormalizeLineEndings(loader.GoodText), Helper.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
+            Assert.AreEqual(Helpers.NormalizeLineEndings(loader.GoodText), Helpers.NormalizeLineEndings(File.ReadAllText(loader.FileName)));
 #endif
 
             using var loader2 = new ConfigLoader(loader.FileName, resourceFileNameGood: "WriteConverted.Good.conf.raw");
@@ -364,7 +363,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_KeyWhitespace() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("KeyWhitespace.conf.raw", "KeyWhitespace.Good.conf.raw");
             Config.User.Save();
 
@@ -384,7 +383,7 @@ public class ConfigSource_Tests {
 
     [TestMethod]
     public void ConfigSource_DeleteAll() {
-        lock (SingleTestSync) {
+        lock (Helpers.SingleTestSync) {
             using var loader = new ConfigLoader("WriteBasic.Good.conf.raw", "Empty.conf.raw");
             Assert.AreEqual("Value 1", Config.Read("Key1"));
             Assert.AreEqual("Value 2", Config.Read("Key2"));
@@ -400,12 +399,6 @@ public class ConfigSource_Tests {
 
     #region Utils
 
-#if NET10_0_OR_GREATER
-    private readonly Lock SingleTestSync = new();
-#else
-    private readonly object SingleTestSync = new();
-#endif
-
     private class ConfigLoader : IDisposable {
 
         public string FileName { get; }
@@ -416,9 +409,9 @@ public class ConfigSource_Tests {
             if (File.Exists(resourceFileName)) {
                 Bytes = File.ReadAllBytes(resourceFileName);
             } else {
-                Bytes = (resourceFileName != null) ? Helper.GetResourceBytes("Config." + resourceFileName) : null;
+                Bytes = (resourceFileName != null) ? Helpers.GetResourceBytes("Config." + resourceFileName) : null;
             }
-            GoodBytes = (resourceFileNameGood != null) ? Helper.GetResourceBytes("Config." + resourceFileNameGood) : null;
+            GoodBytes = (resourceFileNameGood != null) ? Helpers.GetResourceBytes("Config." + resourceFileNameGood) : null;
 
             FileName = Path.GetTempFileName();
             if (resourceFileName == null) {

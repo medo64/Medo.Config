@@ -37,17 +37,7 @@ public static class Config {
     /// </summary>
     private static void Initialize() {
         lock (SyncRoot) {
-            var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly();
-
-            string? productValue = null;
-            string? titleValue = null;
-            var attributes = assembly.GetCustomAttributes();
-            foreach (var attribute in attributes) {
-                if (attribute is AssemblyProductAttribute productAttribute) { productValue = productAttribute.Product.Trim(); }
-                if (attribute is AssemblyTitleAttribute titleAttribute) { titleValue = titleAttribute.Title.Trim(); }
-            }
-
-            var applicationName = productValue ?? titleValue ?? Path.GetFileNameWithoutExtension(assembly.GetName().Name) ?? "application";
+            RetrieveApplicationName(out var applicationName);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 Initialize(applicationName);
@@ -75,27 +65,7 @@ public static class Config {
     /// <param name="applicationName">The name of the application used to determine default configuration file name.</param>
     public static void Initialize(string applicationName) {
         lock (SyncRoot) {
-            string systemConfigPath;
-            string userConfigPath;
-            string stateConfigPath;
-            string recentPath;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                systemConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), applicationName, applicationName + ".conf");
-                userConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".conf");
-                stateConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".state");
-                recentPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".recent");
-            } else {
-                var homeFallback = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                var home = Environment.GetEnvironmentVariable("HOME") ?? homeFallback;
-                var configHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME") ?? Path.Combine(home, ".config");
-                var stateHome = Environment.GetEnvironmentVariable("XDG_STATE_HOME") ?? Path.Combine(home, ".local", "state");
-                systemConfigPath = Path.Combine("/etc", applicationName, applicationName + ".conf");
-                userConfigPath = Path.Combine(configHome, applicationName, applicationName + ".conf");
-                stateConfigPath = Path.Combine(stateHome, applicationName, applicationName + ".state");
-                recentPath = Path.Combine(stateHome, applicationName, applicationName + ".recent");
-            }
-
+            RetrievePaths(applicationName, out var systemConfigPath, out var userConfigPath, out var stateConfigPath, out var recentPath);
             Initialize(userConfigPath, systemConfigPath, stateConfigPath, recentPath);
         }
     }
@@ -126,22 +96,88 @@ public static class Config {
     /// <param name="throwAccessExceptions">If true, exceptions during file access will not be ignored.</param>
     public static void Initialize(string? userConfigPath, string? systemConfigPath, string? stateConfigPath, string? recentPath, bool throwAccessExceptions) {
         lock (SyncRoot) {
-            var userConfigFile = !string.IsNullOrEmpty(userConfigPath) ? new FileInfo(userConfigPath) : null;
-            var systemConfigFile = !string.IsNullOrEmpty(systemConfigPath) ? new FileInfo(systemConfigPath) : null;
-            var stateConfigFile = !string.IsNullOrEmpty(stateConfigPath) ? new FileInfo(stateConfigPath) : null;
-            var recentFile = !string.IsNullOrEmpty(recentPath) ? new FileInfo(recentPath) : null;
+            _user = (userConfigPath == null)
+                  ? new ConfigNoSource()  // throws exceptions if accessed
+                  : (userConfigPath.Length == 0)
+                  ? new ConfigDummySource()  // empty path means no file, but no exceptions
+                  : new ConfigFileSource(new FileInfo(userConfigPath).FullName, throwAccessExceptions);
 
-            _system = (systemConfigFile != null) ? new ConfigFileSource(systemConfigFile.FullName, throwAccessExceptions) : new ConfigDummySource();
-            _user = (userConfigFile != null) ? new ConfigFileSource(userConfigFile.FullName, throwAccessExceptions) : new ConfigDummySource();
-            _state = (stateConfigFile != null) ? new ConfigFileSource(stateConfigFile.FullName, throwAccessExceptions) : new ConfigDummySource();
-            _recent = (recentFile != null) ? new RecentFileSource(recentFile.FullName, throwAccessExceptions) : new RecentDummySource();
+            _system = (systemConfigPath == null)
+                    ? new ConfigNoSource()
+                    : (systemConfigPath.Length == 0)
+                    ? new ConfigDummySource()
+                    : new ConfigFileSource(new FileInfo(systemConfigPath).FullName, throwAccessExceptions);
+
+            _state = (stateConfigPath == null)
+                   ? new ConfigNoSource()
+                   : (stateConfigPath.Length == 0)
+                   ? new ConfigDummySource()
+                   : new ConfigFileSource(new FileInfo(stateConfigPath).FullName, throwAccessExceptions);
+
+            _recent = (recentPath == null)
+                    ? new RecentNoSource()
+                    : (recentPath.Length == 0)
+                    ? new RecentDummySource()
+                    : new RecentFileSource(new FileInfo(recentPath).FullName, throwAccessExceptions);
 
             WasInitialized = true;
         }
     }
 
+    /// <summary>
+    /// Initializes the configuration system with specified files.
+    /// This is optional and only needed if you want to use a custom setup.
+    /// Files that are not specified will be replaced with in-memory configuration.
+    /// </summary>
+    /// <param name="noUserConfig">If true, there will be no user config available..</param>
+    /// <param name="noSystemConfig">If true, there will be no system config available.</param>
+    /// <param name="noStateConfig">If true, there will be no state config available.</param>
+    /// <param name="noRecentFiles">If true, there will be no recent files available.</param>
+    public static void Initialize(bool noUserConfig, bool noSystemConfig, bool noStateConfig, bool noRecentFiles) {
+        RetrieveApplicationName(out var applicationName);
+        RetrievePaths(applicationName, out var systemConfigPath, out var userConfigPath, out var stateConfigPath, out var recentPath);
+        Initialize(
+            noUserConfig ? null : userConfigPath,
+            noSystemConfig ? null : systemConfigPath,
+            noStateConfig ? null : stateConfigPath,
+            noRecentFiles ? null : recentPath
+        );
+    }
+
 
     #region Files
+
+    private static void RetrieveApplicationName(out string applicationName) {
+        var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly();
+
+        string? productValue = null;
+        string? titleValue = null;
+        var attributes = assembly.GetCustomAttributes();
+        foreach (var attribute in attributes) {
+            if (attribute is AssemblyProductAttribute productAttribute) { productValue = productAttribute.Product.Trim(); }
+            if (attribute is AssemblyTitleAttribute titleAttribute) { titleValue = titleAttribute.Title.Trim(); }
+        }
+
+        applicationName = productValue ?? titleValue ?? Path.GetFileNameWithoutExtension(assembly.GetName().Name) ?? "application";
+    }
+
+    private static void RetrievePaths(string applicationName, out string systemConfigPath, out string userConfigPath, out string stateConfigPath, out string recentPath) {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            systemConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), applicationName, applicationName + ".conf");
+            userConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".conf");
+            stateConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".state");
+            recentPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName, applicationName + ".recent");
+        } else {
+            var homeFallback = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var home = Environment.GetEnvironmentVariable("HOME") ?? homeFallback;
+            var configHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME") ?? Path.Combine(home, ".config");
+            var stateHome = Environment.GetEnvironmentVariable("XDG_STATE_HOME") ?? Path.Combine(home, ".local", "state");
+            systemConfigPath = Path.Combine("/etc", applicationName, applicationName + ".conf");
+            userConfigPath = Path.Combine(configHome, applicationName, applicationName + ".conf");
+            stateConfigPath = Path.Combine(stateHome, applicationName, applicationName + ".state");
+            recentPath = Path.Combine(stateHome, applicationName, applicationName + ".recent");
+        }
+    }
 
     private static ConfigSource? _system;
     /// <summary>
@@ -207,7 +243,13 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static string? Read(string key) {
-        return User.Read(key) ?? System.Read(key);
+        if (User is not ConfigNoSource) {
+            return User.Read(key) ?? (System is ConfigNoSource ? null : System.Read(key));
+        } else if (System is not ConfigNoSource) {
+            return System.Read(key);
+        } else {
+            throw new NotSupportedException("No readable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -219,7 +261,13 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null. -or- Default value cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static string Read(string key, string defaultValue) {
-        return User.Read(key, System.Read(key, defaultValue));
+        if (User is not ConfigNoSource) {
+            return User.Read(key, System is ConfigNoSource ? defaultValue : System.Read(key, defaultValue));
+        } else if (System is not ConfigNoSource) {
+            return System.Read(key, defaultValue);
+        } else {
+            throw new NotSupportedException("No readable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -231,7 +279,13 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static bool Read(string key, bool defaultValue) {
-        return User.Read(key, System.Read(key, defaultValue));
+        if (User is not ConfigNoSource) {
+            return User.Read(key, System is ConfigNoSource ? defaultValue : System.Read(key, defaultValue));
+        } else if (System is not ConfigNoSource) {
+            return System.Read(key, defaultValue);
+        } else {
+            throw new NotSupportedException("No readable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -243,7 +297,13 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static int Read(string key, int defaultValue) {
-        return User.Read(key, System.Read(key, defaultValue));
+        if (User is not ConfigNoSource) {
+            return User.Read(key, System is ConfigNoSource ? defaultValue : System.Read(key, defaultValue));
+        } else if (System is not ConfigNoSource) {
+            return System.Read(key, defaultValue);
+        } else {
+            throw new NotSupportedException("No readable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -255,7 +315,13 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static long Read(string key, long defaultValue) {
-        return User.Read(key, System.Read(key, defaultValue));
+        if (User is not ConfigNoSource) {
+            return User.Read(key, System is ConfigNoSource ? defaultValue : System.Read(key, defaultValue));
+        } else if (System is not ConfigNoSource) {
+            return System.Read(key, defaultValue);
+        } else {
+            throw new NotSupportedException("No readable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -267,7 +333,13 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static float Read(string key, float defaultValue) {
-        return User.Read(key, System.Read(key, defaultValue));
+        if (User is not ConfigNoSource) {
+            return User.Read(key, System is ConfigNoSource ? defaultValue : System.Read(key, defaultValue));
+        } else if (System is not ConfigNoSource) {
+            return System.Read(key, defaultValue);
+        } else {
+            throw new NotSupportedException("No readable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -279,7 +351,13 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static double Read(string key, double defaultValue) {
-        return User.Read(key, System.Read(key, defaultValue));
+        if (User is not ConfigNoSource) {
+            return User.Read(key, System is ConfigNoSource ? defaultValue : System.Read(key, defaultValue));
+        } else if (System is not ConfigNoSource) {
+            return System.Read(key, defaultValue);
+        } else {
+            throw new NotSupportedException("No readable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -291,7 +369,13 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static DateTime Read(string key, DateTime defaultValue) {
-        return User.Read(key, System.Read(key, defaultValue));
+        if (User is not ConfigNoSource) {
+            return User.Read(key, System is ConfigNoSource ? defaultValue : System.Read(key, defaultValue));
+        } else if (System is not ConfigNoSource) {
+            return System.Read(key, defaultValue);
+        } else {
+            throw new NotSupportedException("No readable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -301,9 +385,16 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static string[] ReadMany(string key) {
-        var user = User.ReadMany(key);
-        if (user.Length > 0) { return user; }
-        return System.ReadMany(key);
+        if (User is not ConfigNoSource) {
+            var user = User.ReadMany(key);
+            if (user.Length > 0) { return user; }
+            if (System is ConfigNoSource) { return []; }
+            return System.ReadMany(key);
+        } else if (System is not ConfigNoSource) {
+            return System.ReadMany(key);
+        } else {
+            throw new NotSupportedException("No readable configuration source available.");
+        }
     }
 
     #endregion Read
@@ -319,7 +410,11 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null. -or- Value cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static void Write(string key, string value) {
-        User.Write(key, value);
+        if (User is not ConfigNoSource) {
+            User.Write(key, value);
+        } else {
+            throw new NotSupportedException("No writable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -331,7 +426,11 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static void Write(string key, bool value) {
-        User.Write(key, value);
+        if (User is not ConfigNoSource) {
+            User.Write(key, value);
+        } else {
+            throw new NotSupportedException("No writable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -343,7 +442,11 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static void Write(string key, int value) {
-        User.Write(key, value);
+        if (User is not ConfigNoSource) {
+            User.Write(key, value);
+        } else {
+            throw new NotSupportedException("No writable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -355,7 +458,11 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static void Write(string key, long value) {
-        User.Write(key, value);
+        if (User is not ConfigNoSource) {
+            User.Write(key, value);
+        } else {
+            throw new NotSupportedException("No writable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -367,7 +474,11 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static void Write(string key, float value) {
-        User.Write(key, value);
+        if (User is not ConfigNoSource) {
+            User.Write(key, value);
+        } else {
+            throw new NotSupportedException("No writable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -379,7 +490,11 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static void Write(string key, double value) {
-        User.Write(key, value);
+        if (User is not ConfigNoSource) {
+            User.Write(key, value);
+        } else {
+            throw new NotSupportedException("No writable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -391,7 +506,11 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static void Write(string key, DateTime value) {
-        User.Write(key, value);
+        if (User is not ConfigNoSource) {
+            User.Write(key, value);
+        } else {
+            throw new NotSupportedException("No writable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -404,7 +523,11 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static void WriteMany(string key, string[] values) {
-        User.WriteMany(key, values);
+        if (User is not ConfigNoSource) {
+            User.WriteMany(key, values);
+        } else {
+            throw new NotSupportedException("No writable configuration source available.");
+        }
     }
 
     /// <summary>
@@ -414,7 +537,11 @@ public static class Config {
     /// <exception cref="ArgumentNullException">Key cannot be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Key cannot be empty.</exception>
     public static void Delete(string key) {
-        User.Delete(key);
+        if (User is not ConfigNoSource) {
+            User.Delete(key);
+        } else {
+            throw new NotSupportedException("No writable configuration source available.");
+        }
     }
 
     #endregion Shortcuts

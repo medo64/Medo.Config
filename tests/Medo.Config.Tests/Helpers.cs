@@ -3,8 +3,9 @@ namespace Tests;
 using System;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 
-internal static class Helper {
+internal static class Helpers {
 
     public static byte[] GetResourceBytes(string relativePath) {
         var stream = GetResourceStream(relativePath);
@@ -16,7 +17,7 @@ internal static class Helper {
 
     public static Stream GetResourceStream(string relativePath) {
         if (relativePath == null) { return null; }
-        var helperType = typeof(Helper).GetTypeInfo();
+        var helperType = typeof(Helpers).GetTypeInfo();
         var assembly = helperType.Assembly;
         var stream = assembly.GetManifestResourceStream(helperType.Namespace + "._Resources." + relativePath);
         stream ??= assembly.GetManifestResourceStream(helperType.Namespace + "." + relativePath);
@@ -26,5 +27,11 @@ internal static class Helper {
     public static string NormalizeLineEndings(string text) {
         return text.Replace("\r\n", "\n").Replace("\r", "\n");
     }
+
+#if NET10_0_OR_GREATER
+    internal static readonly Lock SingleTestSync = new();
+#else
+    internal static readonly object SingleTestSync = new();
+#endif
 
 }
