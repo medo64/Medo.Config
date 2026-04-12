@@ -66,7 +66,7 @@ public static class Config {
     public static void Initialize(string applicationName) {
         lock (SyncRoot) {
             RetrievePaths(applicationName, out var systemConfigPath, out var userConfigPath, out var stateConfigPath, out var recentPath);
-            Initialize(userConfigPath, systemConfigPath, stateConfigPath, recentPath);
+            InitializeFromFiles(userConfigPath, systemConfigPath, stateConfigPath, recentPath);
         }
     }
 
@@ -80,8 +80,8 @@ public static class Config {
     /// <param name="userConfigPath">Full path to the user configuration file.</param>
     /// <param name="stateConfigPath">Full path to the state configuration file.</param>
     /// <param name="recentPath">Full path to the recent file list.</param>
-    public static void Initialize(string? userConfigPath, string? systemConfigPath, string? stateConfigPath, string? recentPath) {
-        Initialize(userConfigPath, systemConfigPath, stateConfigPath, recentPath, throwAccessExceptions: false);
+    public static void InitializeFromFiles(string? userConfigPath, string? systemConfigPath, string? stateConfigPath, string? recentPath) {
+        InitializeFromFiles(userConfigPath, systemConfigPath, stateConfigPath, recentPath, throwAccessExceptions: false);
     }
 
     /// <summary>
@@ -94,7 +94,7 @@ public static class Config {
     /// <param name="stateConfigPath">Full path to the state configuration file.</param>
     /// <param name="recentPath">Full path to the recent file list.</param>
     /// <param name="throwAccessExceptions">If true, exceptions during file access will not be ignored.</param>
-    public static void Initialize(string? userConfigPath, string? systemConfigPath, string? stateConfigPath, string? recentPath, bool throwAccessExceptions) {
+    public static void InitializeFromFiles(string? userConfigPath, string? systemConfigPath, string? stateConfigPath, string? recentPath, bool throwAccessExceptions) {
         lock (SyncRoot) {
             _user = (userConfigPath == null)
                   ? new ConfigNoSource()  // throws exceptions if accessed
@@ -122,26 +122,6 @@ public static class Config {
 
             WasInitialized = true;
         }
-    }
-
-    /// <summary>
-    /// Initializes the configuration system with specified files.
-    /// This is optional and only needed if you want to use a custom setup.
-    /// Files that are not specified will be replaced with in-memory configuration.
-    /// </summary>
-    /// <param name="noUserConfig">If true, there will be no user config available..</param>
-    /// <param name="noSystemConfig">If true, there will be no system config available.</param>
-    /// <param name="noStateConfig">If true, there will be no state config available.</param>
-    /// <param name="noRecentFiles">If true, there will be no recent files available.</param>
-    public static void Initialize(bool noUserConfig, bool noSystemConfig, bool noStateConfig, bool noRecentFiles) {
-        RetrieveApplicationName(out var applicationName);
-        RetrievePaths(applicationName, out var systemConfigPath, out var userConfigPath, out var stateConfigPath, out var recentPath);
-        Initialize(
-            noUserConfig ? null : userConfigPath,
-            noSystemConfig ? null : systemConfigPath,
-            noStateConfig ? null : stateConfigPath,
-            noRecentFiles ? null : recentPath
-        );
     }
 
 

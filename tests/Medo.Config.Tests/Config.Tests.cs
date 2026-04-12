@@ -14,7 +14,7 @@ public class Config_Tests {
     [TestMethod]
     public void Config_UserNoAccess() {
         lock (Helpers.SingleTestSync) {
-            Config.Initialize(null, "", "", "");
+            Config.InitializeFromFiles(null, "", "", "");
             Assert.Throws<NotSupportedException>(() => {
                 var _ = Config.User.Read("test", "");
             });
@@ -24,7 +24,7 @@ public class Config_Tests {
     [TestMethod]
     public void Config_SystemNoAccess() {
         lock (Helpers.SingleTestSync) {
-            Config.Initialize("", null, "", "");
+            Config.InitializeFromFiles("", null, "", "");
             Assert.Throws<NotSupportedException>(() => {
                 var _ = Config.System.Read("test", "");
             });
@@ -34,7 +34,7 @@ public class Config_Tests {
     [TestMethod]
     public void Config_StateNoAccess() {
         lock (Helpers.SingleTestSync) {
-            Config.Initialize("", "", null, "");
+            Config.InitializeFromFiles("", "", null, "");
             Assert.Throws<NotSupportedException>(() => {
                 var _ = Config.State.Read("test", "");
             });
@@ -44,7 +44,7 @@ public class Config_Tests {
     [TestMethod]
     public void Config_RecentNoAccess() {
         lock (Helpers.SingleTestSync) {
-            Config.Initialize("", "", "", null);
+            Config.InitializeFromFiles("", "", "", null);
             Assert.Throws<NotSupportedException>(() => {
                 Config.Recent.Files.Add(new FileInfo("test.txt"));
             });
@@ -55,7 +55,7 @@ public class Config_Tests {
     [TestMethod]
     public void Config_Direct_UserNoAccessSystemNoAccess() {
         lock (Helpers.SingleTestSync) {
-            Config.Initialize(null, null, null, null);
+            Config.InitializeFromFiles(null, null, null, null);
             Assert.Throws<NotSupportedException>(() => {
                 Config.Write("test", "");
             });
@@ -68,7 +68,7 @@ public class Config_Tests {
     [TestMethod]
     public void Config_Direct_UserNoAccessSystemDummy() {
         lock (Helpers.SingleTestSync) {
-            Config.Initialize(null, "", null, null);
+            Config.InitializeFromFiles(null, "", null, null);
             Assert.Throws<NotSupportedException>(() => {
                 Config.Write("test", "X");
             });
@@ -80,7 +80,7 @@ public class Config_Tests {
     [TestMethod]
     public void Config_Direct_UserDummySystemNoAccess() {
         lock (Helpers.SingleTestSync) {
-            Config.Initialize("", null, null, null);
+            Config.InitializeFromFiles("", null, null, null);
             Config.Write("test", "X");
             Assert.Throws<NotSupportedException>(() => {
                 Config.System.Write("test", "Y");

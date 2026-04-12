@@ -201,7 +201,7 @@ public class ConfigSource_Tests {
                 Directory.Delete(Path.Combine(Path.GetTempPath(), "ConfigDirectory"), true);
             } catch (IOException) { }
 
-            Config.Initialize(propertiesFile, "", "", "");
+            Config.InitializeFromFiles(propertiesFile, "", "", "");
 
             Config.User.Save();
             Assert.IsTrue(File.Exists(propertiesFile));
@@ -218,7 +218,7 @@ public class ConfigSource_Tests {
                 Directory.Delete(Path.Combine(Path.GetTempPath(), "ConfigDirectoryOuter"), true);
             } catch (IOException) { }
 
-            Config.Initialize(propertiesFile, "", "", "");
+            Config.InitializeFromFiles(propertiesFile, "", "", "");
 
             Config.User.Save();
             Assert.IsTrue(File.Exists(propertiesFile));
@@ -235,7 +235,7 @@ public class ConfigSource_Tests {
                 Directory.Delete(Path.Combine(Path.GetTempPath(), "ConfigDirectoryOuter"), true);
             } catch (IOException) { }
 
-            Config.Initialize(propertiesFile, "", "", "");
+            Config.InitializeFromFiles(propertiesFile, "", "", "");
 
             Config.User.Save();
             Assert.IsTrue(File.Exists(propertiesFile));
@@ -420,7 +420,7 @@ public class ConfigSource_Tests {
                 File.WriteAllBytes(FileName, Bytes);
             }
 
-            Config.Initialize(FileName, null, null, null);
+            Config.InitializeFromFiles(FileName, null, null, null);
         }
 
         private readonly Encoding Utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
