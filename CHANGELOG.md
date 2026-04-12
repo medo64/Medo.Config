@@ -3,6 +3,12 @@ CHANGELOG
 Changelog at https://github.com/medo64/Medo.Config/blob/main/CHANGELOG.md
 
 
+[1.3.0] (2026-04-11)
+
+- Option to throw exceptions on file access error
+- Option to not specify data source at all (used to redirect to dummy source, now throws exception)
+
+
 [1.2.1] (2026-04-01)
 
 - Added .NET 4.8.1 support
@@ -28,6 +34,7 @@ Changelog at https://github.com/medo64/Medo.Config/blob/main/CHANGELOG.md
 
 
 [unreleased]: https://github.com/medo64/Medo.Config
+[1.3.0]: https://www.nuget.org/packages/Medo.Config/1.3.0
 [1.2.1]: https://www.nuget.org/packages/Medo.Config/1.2.1
 [1.2.0]: https://www.nuget.org/packages/Medo.Config/1.2.0
 [1.1.0]: https://www.nuget.org/packages/Medo.Config/1.1.0
