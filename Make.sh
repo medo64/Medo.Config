@@ -971,7 +971,7 @@ make_publish() {
         if [ "$GIT_VERSION" != "" ] && [ "$GIT_VERSION" != "0.0.0" ]; then
             PUBLISH_GITHUB_OWNER=$( echo "$PUBLISH_GITHUB_URL" | cut -d/ -f4 )
             PUBLISH_GITHUB_REPO=$( echo "$PUBLISH_GITHUB_URL" | cut -d/ -f5 )
-            echo "${ANSI_CYAN}Pusing to $PUBLISH_GITHUB_OWNER:$PUBLISH_GITHUB_REPO${ANSI_RESET}" >&2
+            echo "${ANSI_CYAN}Pushing to $PUBLISH_GITHUB_OWNER:$PUBLISH_GITHUB_REPO${ANSI_RESET}" >&2
 
             if [ "$GITHUB_UPLOAD_FILES" != "" ]; then
                 PUBLISH_GITHUB_EXISTING_RELEASE_ID=$( curl -s https://api.github.com/repos/$PUBLISH_GITHUB_OWNER/$PUBLISH_GITHUB_REPO/releases \
