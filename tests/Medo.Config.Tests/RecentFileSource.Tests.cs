@@ -16,6 +16,9 @@ public class RecentFileSource_Tests {
         var files = source.Files;
         Assert.AreEqual(0, files.Count);
 
+        Assert.IsFalse(files.TryGet(-1, out _));
+        Assert.IsFalse(files.TryGet(0, out _));
+
         Assert.IsFalse(File.Exists(tempFile.FileName));  // since there is no write, no file is expected
     }
 
@@ -33,6 +36,12 @@ public class RecentFileSource_Tests {
         Assert.AreEqual(2, lines.Length);
         Assert.IsTrue(lines[0].EndsWith("test.txt"));
         Assert.AreEqual("", lines[1]);
+
+        Assert.IsTrue(files.TryGet(0, out var fileOut));
+        Assert.AreEqual("test.txt", fileOut.Name);
+
+        Assert.IsFalse(files.TryGet(-1, out _));
+        Assert.IsFalse(files.TryGet(1, out _));
     }
 
     [TestMethod]

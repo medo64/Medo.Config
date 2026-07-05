@@ -3,6 +3,7 @@ namespace Medo;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 
@@ -62,6 +63,26 @@ public sealed class RecentFiles : IEnumerable<FileInfo> {
                 FilesCache ??= Source.GetFiles();
                 return FilesCache.Length;
             }
+        }
+    }
+
+    /// <summary>
+    /// Returns true if file exists at the specified index.
+    /// File will be returned in output argument.
+    /// </summary>
+    /// <param name="index">Index.</param>
+    /// <param name="file">File at the specified location.</param>
+#if NET10_0_OR_GREATER
+    public bool TryGet(int index, [NotNullWhen(true)] out FileInfo? file) {
+#else
+    public bool TryGet(int index, out FileInfo? file) {
+#endif
+        lock (SyncRoot) {
+            FilesCache ??= Source.GetFiles();
+            if (index < 0) { file = null; return false; }
+            if (index >= FilesCache.Length) { file = null; return false; }
+            file = FilesCache[index];
+            return true;
         }
     }
 
