@@ -3,6 +3,11 @@ CHANGELOG
 Changelog at https://github.com/medo64/Medo.Config/blob/main/CHANGELOG.md
 
 
+[1.3.1] (2026-07-04)
+
+- Added TryGet to Recent files
+
+
 [1.3.0] (2026-04-11)
 
 - Option to throw exceptions on file access error
