@@ -129,25 +129,50 @@ else
     exit 113
 fi
 
-PROJECT_SINGLEFILE=$( cat "$SCRIPT_DIR/.meta" | grep -E "^PROJECT_SINGLEFILE:" | sed  -n 1p | cut -d: -sf2- | xargs | tr '[:upper:]' '[:lower:]' )
-if [ "$PROJECT_SINGLEFILE" = "true" ] || [ "$PROJECT_SINGLEFILE" = "false" ]; then
-    echo "${ANSI_PURPLE}Project single-file .: ${ANSI_MAGENTA}$PROJECT_SINGLEFILE${ANSI_RESET}"
+PUBLISH_SINGLEFILE=$( cat "$SCRIPT_DIR/.meta" | grep -E "^PUBLISH_SINGLEFILE:" | sed  -n 1p | cut -d: -sf2- | xargs | tr '[:upper:]' '[:lower:]' )
+if [ "$PUBLISH_SINGLEFILE" = "true" ] || [ "$PUBLISH_SINGLEFILE" = "false" ]; then
+    echo "${ANSI_PURPLE}Publish single-file .: ${ANSI_MAGENTA}$PUBLISH_SINGLEFILE${ANSI_RESET}"
 elif [ "$PROJECT_OUTPUTTYPE" = "exe" ] || [ "$PROJECT_OUTPUTTYPE" = "winexe" ]; then
-    PROJECT_SINGLEFILE=true
-    echo "${ANSI_PURPLE}Project single-file .: ${ANSI_MAGENTA}$PROJECT_SINGLEFILE${ANSI_RESET}"
+    PUBLISH_SINGLEFILE=true
+    echo "${ANSI_PURPLE}Publish single-file .: ${ANSI_MAGENTA}$PUBLISH_SINGLEFILE${ANSI_RESET}"
 elif [ "$PROJECT_OUTPUTTYPE" = "library" ]; then  # libraries cannot be published as a single file
-    PROJECT_SINGLEFILE=false
-    echo "${ANSI_PURPLE}Project single-file .: ${ANSI_MAGENTA}$PROJECT_SINGLEFILE${ANSI_RESET}"
+    PUBLISH_SINGLEFILE=false
+    echo "${ANSI_PURPLE}Publish single-file .: ${ANSI_MAGENTA}$PUBLISH_SINGLEFILE${ANSI_RESET}"
 else
-    PROJECT_SINGLEFILE=
+    PUBLISH_SINGLEFILE=
 fi
 
-PROJECT_RUNTIMES=$( cat "$SCRIPT_DIR/.meta" | grep -E "^PROJECT_RUNTIMES:" | sed  -n 1p | cut -d: -sf2- | xargs )
-if [ "$PROJECT_RUNTIMES" = "" ]; then
-    PROJECT_RUNTIMES=current
+PUBLISH_AOT=$( cat "$SCRIPT_DIR/.meta" | grep -E "^PUBLISH_AOT:" | sed  -n 1p | cut -d: -sf2- | xargs | tr '[:upper:]' '[:lower:]' )
+if [ "$PUBLISH_AOT" = "true" ] || [ "$PUBLISH_AOT" = "false" ]; then
+    echo "${ANSI_PURPLE}Publish AOT compile .: ${ANSI_MAGENTA}$PUBLISH_AOT${ANSI_RESET}"
+else
+    PUBLISH_AOT=
 fi
-echo "${ANSI_PURPLE}Project runtimes ....: ${ANSI_MAGENTA}$PROJECT_RUNTIMES${ANSI_RESET}"
 
+PUBLISH_RUNTIMES=$( cat "$SCRIPT_DIR/.meta" | grep -E "^PUBLISH_RUNTIMES:" | sed  -n 1p | cut -d: -sf2- | xargs )
+if [ "$PUBLISH_RUNTIMES" = "" ]; then
+    PUBLISH_RUNTIMES=current
+fi
+echo "${ANSI_PURPLE}Publish runtimes ....: ${ANSI_MAGENTA}$PUBLISH_RUNTIMES${ANSI_RESET}"
+
+PROJECT_EXAMPLES=$( cat "$SCRIPT_DIR/.meta" | grep -E "^PROJECT_EXAMPLES_DIR:" | cut -d: -sf2- | xargs )
+if [ "$PROJECT_EXAMPLES" != "" ]; then
+    FIRST_LINE=1
+    for PROJECT_EXAMPLE in $PROJECT_EXAMPLES; do
+        if [ "$FIRST_LINE" -ne 0 ]; then
+            echo -n "${ANSI_PURPLE}Project examples ....: "
+            FIRST_LINE=0
+        else
+            echo -n "${ANSI_PURPLE}                       "
+        fi
+        if [ -e "$SCRIPT_DIR/$PROJECT_EXAMPLE" ]; then
+            echo "${ANSI_MAGENTA}$PROJECT_EXAMPLE${ANSI_RESET}"
+        else
+            echo "${ANSI_RED}not found${ANSI_RESET}" >&2
+            exit 113
+        fi
+    done
+fi
 
 DOCKER_FILE="$(find "$SCRIPT_DIR/src" -type f -name "Dockerfile" -print | sed -n 1p)"
 
@@ -543,9 +568,9 @@ make_debug() {
         echo "${ANSI_MAGENTA}$(basename $ENTRYPOINT)${ANSI_RESET}"
 
         PUBLISH_EXTRA_ARGS=
-        if [ "$PROJECT_SINGLEFILE" = "true" ]; then
+        if [ "$PUBLISH_SINGLEFILE" = "true" ]; then
             PUBLISH_EXTRA_ARGS="$PUBLISH_EXTRA_ARGS --self-contained true -p:PublishSingleFile=true"
-        elif [ "$PROJECT_SINGLEFILE" = "false" ]; then
+        elif [ "$PUBLISH_SINGLEFILE" = "false" ]; then
             PUBLISH_EXTRA_ARGS="$PUBLISH_EXTRA_ARGS --self-contained false -p:PublishSingleFile=false"
         fi
 
@@ -582,16 +607,21 @@ make_release() {
     echo
 
     mkdir -p "$SCRIPT_DIR/bin"
-    PROJECT_RUNTIME_COUNT=$(echo $PROJECT_RUNTIMES | wc -w)
-    for RUNTIME in $PROJECT_RUNTIMES; do
+    PROJECT_RUNTIME_COUNT=$(echo $PUBLISH_RUNTIMES | wc -w)
+    for RUNTIME in $PUBLISH_RUNTIMES; do
         for ENTRYPOINT in $PROJECT_ENTRYPOINTS; do
             echo "${ANSI_MAGENTA}$(basename $ENTRYPOINT) ($RUNTIME)${ANSI_RESET}"
 
             PUBLISH_EXTRA_ARGS=
-            if [ "$PROJECT_SINGLEFILE" = "true" ]; then
+            if [ "$PUBLISH_SINGLEFILE" = "true" ]; then
                 PUBLISH_EXTRA_ARGS="$PUBLISH_EXTRA_ARGS --self-contained true -p:PublishSingleFile=true"
-            elif [ "$PROJECT_SINGLEFILE" = "false" ]; then
+            elif [ "$PUBLISH_SINGLEFILE" = "false" ]; then
                 PUBLISH_EXTRA_ARGS="$PUBLISH_EXTRA_ARGS --self-contained false -p:PublishSingleFile=false"
+            fi
+            if [ "$PUBLISH_AOT" = "true" ]; then
+                PUBLISH_EXTRA_ARGS="$PUBLISH_EXTRA_ARGS -p:PublishAot=true"
+            elif [ "$PUBLISH_AOT" = "false" ]; then
+                PUBLISH_EXTRA_ARGS="$PUBLISH_EXTRA_ARGS -p:PublishAot=false"
             fi
 
             ENTRYPOINT_OUTPUTTYPE=$( cat "$SCRIPT_DIR/$ENTRYPOINT" | grep -E "<OutputType>" | sed -n 1p | sed -E "s|.*<OutputType>(.*)</OutputType>.*|\1|g" | xargs | tr '[:upper:]' '[:lower:]' )
@@ -630,13 +660,13 @@ make_release() {
             echo
         done
 
-        if [ -e "$SCRIPT_DIR/examples/content" ]; then
-            echo "${ANSI_MAGENTA}examples: content ($RUNTIME)${ANSI_RESET}"
+        for PROJECT_EXAMPLE in $PROJECT_EXAMPLES; do
+            echo "${ANSI_MAGENTA}examples: $PROJECT_EXAMPLE ($RUNTIME)${ANSI_RESET}"
             mkdir -p "$PUBLISH_OUTPUT_DIR/examples"
-            (cd "$SCRIPT_DIR/examples/content" && find . -type d -exec mkdir -p "$PUBLISH_OUTPUT_DIR/examples/{}" \;)
-            (cd "$SCRIPT_DIR/examples/content" && find . -type f -exec cp --parents {} "$PUBLISH_OUTPUT_DIR/examples/" \;)
+            (cd "$SCRIPT_DIR/$PROJECT_EXAMPLE" && find . -type d -exec mkdir -p "$PUBLISH_OUTPUT_DIR/examples/{}" \;)
+            (cd "$SCRIPT_DIR/$PROJECT_EXAMPLE" && find . -type f -exec cp --parents {} "$PUBLISH_OUTPUT_DIR/examples/" \;)
             echo
-        fi
+        done
     done
 }
 
@@ -649,7 +679,7 @@ make_package() {
 
     ANYTHING_DONE=0
 
-    for RUNTIME in $PROJECT_RUNTIMES; do
+    for RUNTIME in $PUBLISH_RUNTIMES; do
         if [ "$RUNTIME" = "current" ]; then continue; fi
 
         ANYTHING_DONE=1
@@ -678,7 +708,7 @@ make_package() {
     done
 
     if [ "$PACKAGE_LINUX_APPIMAGE" != "" ]; then
-        for RUNTIME in $PROJECT_RUNTIMES; do
+        for RUNTIME in $PUBLISH_RUNTIMES; do
             case $RUNTIME in
                 linux-x64)   APPIMAGE_ARCHITECTURE=x86_64 ;;
                 linux-arm64) APPIMAGE_ARCHITECTURE=aarch64 ;;
@@ -724,7 +754,7 @@ make_package() {
     fi
 
     if [ "$PACKAGE_LINUX_DEB" != "" ]; then
-        for RUNTIME in $PROJECT_RUNTIMES; do
+        for RUNTIME in $PUBLISH_RUNTIMES; do
             case $RUNTIME in
                 linux-x64)   DEB_ARCHITECTURE=amd64 ;;
                 linux-arm64) DEB_ARCHITECTURE=arm64 ;;
@@ -853,7 +883,7 @@ make_publish() {
 
     if [ "$PUBLISH_LINUX_ARCHIVE" != "" ]; then
         if [ "$GIT_VERSION" != "" ]; then
-            for RUNTIME in $PROJECT_RUNTIMES; do
+            for RUNTIME in $PUBLISH_RUNTIMES; do
                 case $RUNTIME in
                     current) continue ;;
                     win-*)   ARCHIVE_NAME_CURR="$PROJECT_NAME_LOWER-$ASSEMBLY_VERSION_TEXT-$RUNTIME.zip" ;;
@@ -874,7 +904,7 @@ make_publish() {
     fi
 
     if [ "$PUBLISH_LINUX_APPIMAGE" != "" ]; then
-        for RUNTIME in $PROJECT_RUNTIMES; do
+        for RUNTIME in $PUBLISH_RUNTIMES; do
             case $RUNTIME in
                 linux-x64)   APPIMAGE_NAME_CURR=$APPIMAGE_NAME_AMD64 ;;
                 linux-arm64) APPIMAGE_NAME_CURR=$APPIMAGE_NAME_ARM64 ;;
@@ -892,8 +922,8 @@ make_publish() {
     fi
 
     if [ "$PUBLISH_LINUX_DEB" != "" ]; then
-        if [ "$PACKAGE_NUGET_VERSION" != "" ] && [ "$PACKAGE_NUGET_VERSION" != "0.0.0" ]; then
-            for RUNTIME in $PROJECT_RUNTIMES; do
+        if [ "$DEB_VERSION" != "" ] && [ "$DEB_VERSION" != "0.0.0" ]; then
+            for RUNTIME in $PUBLISH_RUNTIMES; do
                 case $RUNTIME in
                     linux-x64)   DEB_ARCHITECTURE=amd64 ; DEB_PACKAGE_CURR=$DEB_PACKAGE_AMD64 ;;
                     linux-arm64) DEB_ARCHITECTURE=arm64 ; DEB_PACKAGE_CURR=$DEB_PACKAGE_ARM64 ;;
@@ -971,12 +1001,12 @@ make_publish() {
         if [ "$GIT_VERSION" != "" ] && [ "$GIT_VERSION" != "0.0.0" ]; then
             PUBLISH_GITHUB_OWNER=$( echo "$PUBLISH_GITHUB_URL" | cut -d/ -f4 )
             PUBLISH_GITHUB_REPO=$( echo "$PUBLISH_GITHUB_URL" | cut -d/ -f5 )
-            echo "${ANSI_CYAN}Pushing to $PUBLISH_GITHUB_OWNER:$PUBLISH_GITHUB_REPO${ANSI_RESET}" >&2
+            echo "${ANSI_CYAN}Pusing to $PUBLISH_GITHUB_OWNER:$PUBLISH_GITHUB_REPO${ANSI_RESET}" >&2
 
             if [ "$GITHUB_UPLOAD_FILES" != "" ]; then
                 PUBLISH_GITHUB_EXISTING_RELEASE_ID=$( curl -s https://api.github.com/repos/$PUBLISH_GITHUB_OWNER/$PUBLISH_GITHUB_REPO/releases \
                                                               -H "Authorization: Bearer $PUBLISH_GITHUB_KEY" \
-                                                      | jq -r ".[] | select(.tag_name==\"$GIT_VERSION\") | .id" 2>/dev/null )
+                                                      | jq -r ".[] | select(.tag_name==\"v$GIT_VERSION\") | .id" 2>/dev/null )
                 if [ "$PUBLISH_GITHUB_EXISTING_RELEASE_ID" != "" ]; then
                     echo "${ANSI_YELLOW}Release with tag $GIT_VERSION already exists, deleting it first${ANSI_RESET}" >&2
                     curl -X DELETE https://api.github.com/repos/$PUBLISH_GITHUB_OWNER/$PUBLISH_GITHUB_REPO/releases/$PUBLISH_GITHUB_EXISTING_RELEASE_ID \
@@ -987,7 +1017,7 @@ make_publish() {
                                                           -H "Authorization: Bearer $PUBLISH_GITHUB_KEY" \
                                                           -H "Accept: application/vnd.github+json" \
                                                           -d "{
-                                                              \"tag_name\": \"$GIT_VERSION\",
+                                                              \"tag_name\": \"v$GIT_VERSION\",
                                                               \"name\": \"$GIT_VERSION\",
                                                               \"body\": \"\",
                                                               \"draft\": false,
