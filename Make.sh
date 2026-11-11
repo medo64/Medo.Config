@@ -1006,13 +1006,14 @@ make_publish() {
     if [ "$PUBLISH_NUGET_KEY" != "" ]; then
         if [ "$PACKAGE_NUGET_VERSION" != "" ] && [ "$PACKAGE_NUGET_VERSION" != "0.0.0" ]; then
             if [ "$SHOULD_VERSION_PUBLISH" -ne 0 ]; then
+                echo "${ANSI_CYAN}Pushing to NuGet $PACKAGE_NUGET_ID.$PACKAGE_NUGET_VERSION${ANSI_RESET}" >&2
+                PACKAGE_NUGET_FILENAME=$PACKAGE_NUGET_ID.$PACKAGE_NUGET_VERSION.nupkg
                 dotnet nuget push   \
                     --source "https://api.nuget.org/v3/index.json"           \
                     --api-key "$PUBLISH_NUGET_KEY"                           \
                     --symbol-api-key "$PUBLISH_NUGET_KEY"                    \
-                    "./dist/$PACKAGE_NUGET_ID.$PACKAGE_NUGET_VERSION.nupkg" || return 1
+                    "./dist/$PACKAGE_NUGET_FILENAME"                        || return 1
                 ANYTHING_DONE=1
-                PACKAGE_NUGET_FILENAME=$PACKAGE_NUGET_ID-$PACKAGE_NUGET_VERSION.nupkg
                 echo "${ANSI_GREEN}Sent ${ANSI_CYAN}dist/$PACKAGE_NUGET_FILENAME${ANSI_RESET}"
                 GITHUB_UPLOAD_FILES="$GITHUB_UPLOAD_FILES dist/$PACKAGE_NUGET_FILENAME"
             else
@@ -1028,7 +1029,7 @@ make_publish() {
         if [ "$GIT_VERSION" != "" ] && [ "$GIT_VERSION" != "0.0.0" ]; then
             PUBLISH_GITHUB_OWNER=$( echo "$PUBLISH_GITHUB_URL" | cut -d/ -f4 )
             PUBLISH_GITHUB_REPO=$( echo "$PUBLISH_GITHUB_URL" | cut -d/ -f5 )
-            echo "${ANSI_CYAN}Pushing to $PUBLISH_GITHUB_OWNER:$PUBLISH_GITHUB_REPO${ANSI_RESET}" >&2
+            echo "${ANSI_CYAN}Pushing to GitHub $PUBLISH_GITHUB_OWNER:$PUBLISH_GITHUB_REPO${ANSI_RESET}" >&2
 
             if [ "$GITHUB_UPLOAD_FILES" != "" ]; then
                 if [ "$SHOULD_VERSION_PUBLISH" -ne 0 ]; then
